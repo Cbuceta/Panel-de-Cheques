@@ -1,0 +1,1025 @@
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+
+<style>
+  :root{
+    --bg:#0b0d12;
+    --panel:#12151c;
+    --panel-2:#171b23;
+    --line:#262b35;
+    --text:#eef0f3;
+    --text-dim:#8b93a1;
+    --gold:#f0c419;
+    --gold-ink:#1a1608;
+    --red:#ef4444;
+    --orange:#f59e0b;
+    --green:#22c55e;
+    --blue:#4d8dff;
+    --grey:#8b93a1;
+    --sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif;
+  }
+  *{box-sizing:border-box;}
+  #panel{
+    background:var(--bg);
+    color:var(--text);
+    font-family:var(--sans);
+    padding:0 0 50px;
+    border-radius:6px;
+    min-height:100%;
+  }
+  /* ---------- header ---------- */
+  .topbar{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    padding:14px 22px;
+    border-bottom:1px solid var(--line);
+    background:var(--panel);
+    border-radius:6px 6px 0 0;
+    flex-wrap:wrap;
+    gap:12px;
+  }
+  .topbar .brand{ display:flex; align-items:center; gap:12px; }
+  .brand .icon{
+    width:34px; height:34px; border-radius:8px;
+    background:var(--gold); color:var(--gold-ink);
+    display:flex; align-items:center; justify-content:center;
+    font-size:17px; font-weight:800;
+  }
+  .brand h1{ font-size:16.5px; margin:0; font-weight:700; }
+  .brand .sub{ font-size:11.5px; color:var(--text-dim); }
+  .topbar .actions{ display:flex; gap:8px; align-items:center; }
+  .ghost-btn{
+    background:var(--panel-2); border:1px solid var(--line); color:var(--text);
+    padding:8px 13px; border-radius:6px; font-size:12.5px; cursor:pointer;
+  }
+  .ghost-btn:hover{ border-color:var(--text-dim); }
+
+  .content{ padding:22px 22px 0; }
+
+  /* ---------- hero ---------- */
+  .hero{
+    background:var(--gold);
+    color:var(--gold-ink);
+    border-radius:8px;
+    padding:20px 24px;
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    flex-wrap:wrap;
+    gap:18px;
+    margin-bottom:22px;
+  }
+  .hero .label{ font-size:12px; letter-spacing:.5px; opacity:.75; font-weight:700; }
+  .hero .num{ font-size:38px; font-weight:800; line-height:1.1; margin-top:2px; }
+  .hero .sub{ font-size:12.5px; opacity:.8; margin-top:4px; }
+  .hero .stats{ display:flex; gap:26px; flex-wrap:wrap; }
+  .hero .stats .st{ text-align:center; }
+  .hero .stats .st .n{ font-size:24px; font-weight:800; }
+  .hero .stats .st .l{ font-size:10.5px; text-transform:uppercase; letter-spacing:.4px; opacity:.75; }
+
+  /* ---------- bank cards (interactive filter buttons) ---------- */
+  .bank-cards{ display:flex; gap:12px; flex-wrap:wrap; margin-bottom:22px; }
+  .bank-card{
+    background:var(--panel);
+    border:1px solid var(--line);
+    border-bottom:3px solid var(--card-color, var(--grey));
+    border-radius:6px;
+    padding:14px 16px;
+    flex:1 1 160px;
+    min-width:150px;
+    cursor:pointer;
+    transition:transform .1s, background .12s;
+  }
+  .bank-card:hover{ background:var(--panel-2); }
+  .bank-card.active{
+    background:var(--panel-2);
+    box-shadow:0 0 0 1px var(--card-color, var(--gold)) inset;
+  }
+  .bank-card .label{ font-size:11px; color:var(--text-dim); margin-bottom:6px; }
+  .bank-card .num{ font-size:20px; font-weight:800; color:var(--card-color, var(--text)); }
+  .bank-card .sub{ font-size:10.5px; color:var(--text-dim); margin-top:5px; }
+  .bank-card .hint{ font-size:9.5px; color:var(--card-color, var(--gold)); margin-top:6px; }
+
+  /* ---------- filters ---------- */
+  .filters-row{
+    display:flex; gap:10px; flex-wrap:wrap; align-items:center; margin-bottom:20px;
+  }
+  .filters-row input[type=text], .filters-row select{
+    background:var(--panel); border:1px solid var(--line); color:var(--text);
+    padding:9px 13px; border-radius:6px; font-size:12.5px;
+  }
+  .filters-row input[type=text]{ min-width:200px; }
+  .filters-row input:focus, .filters-row select:focus{ outline:none; border-color:var(--gold); }
+  .clear-filters{ font-size:12px; color:var(--text-dim); background:none; border:none; text-decoration:underline; cursor:pointer; padding:4px; }
+
+  /* ---------- tabs ---------- */
+  .tabs{ display:flex; gap:4px; margin-bottom:20px; border-bottom:1px solid var(--line); }
+  .tab-btn{
+    background:none; border:none; color:var(--text-dim); padding:10px 4px; margin-right:24px;
+    font-size:14px; font-family:var(--sans); cursor:pointer; border-bottom:2px solid transparent;
+  }
+  .tab-btn.active{ color:var(--text); border-bottom-color:var(--gold); }
+  .tab-panel{ display:none; }
+  .tab-panel.active{ display:block; }
+
+  .section-label{ font-size:11.5px; color:var(--text-dim); margin:0 0 10px; letter-spacing:.3px; text-transform:uppercase; }
+
+  /* ---------- upload zone ---------- */
+  .upload-zone{
+    background:var(--panel); border:1.5px dashed var(--line); border-radius:6px;
+    padding:20px; text-align:center; margin-bottom:22px; transition:border-color .15s;
+  }
+  .upload-zone.drag{ border-color:var(--gold); }
+  .upload-zone p{ margin:0 0 10px; color:var(--text-dim); font-size:13px; }
+  .upload-zone input[type=file]{ display:none; }
+  .upload-status{ font-size:12.5px; color:var(--text-dim); margin-top:10px; min-height:16px; }
+  .upload-status.ok{ color:var(--green); }
+  .upload-status.err{ color:var(--red); }
+
+  /* ---------- summary cards (secondary, inside tabs) ---------- */
+  .summary-row{ display:flex; gap:14px; flex-wrap:wrap; margin-bottom:24px; }
+  .card{ background:var(--panel); border:1px solid var(--line); border-radius:6px; padding:15px 17px; flex:1 1 170px; min-width:160px; }
+  .card .bank{ font-size:11.5px; color:var(--text-dim); margin-bottom:8px; }
+  .card .num{ font-size:20px; font-weight:800; }
+  .card.total{ background:var(--panel-2); border-color:var(--gold); }
+  .card.total .num{ color:var(--gold); }
+  .card.loss .num{ color:var(--red); }
+  .card.net .num{ color:var(--green); }
+
+  /* ---------- manual form ---------- */
+  details.form-box{ background:var(--panel); border:1px solid var(--line); border-radius:6px; padding:16px 20px; margin-bottom:24px; }
+  details.form-box summary{ cursor:pointer; font-size:13px; color:var(--text-dim); list-style:none; }
+  details.form-box summary::-webkit-details-marker{ display:none; }
+  details.form-box summary:before{ content:'+ '; color:var(--gold); }
+  details.form-box[open] summary:before{ content:'– '; }
+  .form-grid{ display:grid; grid-template-columns:repeat(4, 1fr); gap:12px; margin-top:16px; }
+  @media(max-width:700px){ .form-grid{grid-template-columns:repeat(2,1fr);} }
+  .field{ display:flex; flex-direction:column; gap:5px; }
+  .field label{ font-size:11px; color:var(--text-dim); }
+  .field input, .field select{ background:var(--bg); border:1px solid var(--line); color:var(--text); padding:8px 9px; border-radius:4px; font-size:13.5px; }
+  .field input:focus, .field select:focus{ outline:none; border-color:var(--gold); }
+  .field.wide{ grid-column: span 2; }
+  .form-actions{ display:flex; justify-content:flex-end; gap:10px; margin-top:16px; }
+
+  button.primary{ background:var(--gold); border-color:var(--gold); color:var(--gold-ink); font-weight:700; }
+  button.primary:hover{ filter:brightness(1.06); }
+  .ghost-btn, button.primary{ font-family:var(--sans); font-size:13px; padding:9px 17px; border-radius:6px; border:1px solid var(--line); cursor:pointer; }
+  button.link{ background:none; border:none; color:var(--text-dim); padding:2px 6px; font-size:12px; text-decoration:underline; cursor:pointer; }
+  button.link:hover{ color:var(--red); }
+  button.upload-btn{ background:var(--gold); border-color:var(--gold); color:var(--gold-ink); font-weight:700; font-size:13px; padding:9px 17px; border-radius:6px; cursor:pointer; }
+
+  /* ---------- table ---------- */
+  table{ width:100%; border-collapse:collapse; font-size:12.8px; color:var(--text) !important; }
+  thead th{ text-align:left; color:var(--text-dim) !important; font-weight:600; font-size:10.5px; letter-spacing:.3px; text-transform:uppercase; padding:9px 10px; border-bottom:1px solid var(--line); }
+  tbody td{ padding:10px; border-bottom:1px solid var(--line); color:var(--text) !important; }
+  tbody tr:hover{ background:var(--panel); }
+  td.num, th.num{ text-align:right; font-variant-numeric:tabular-nums; }
+  table, table *{ color:var(--text); }
+  thead th{ color:var(--text-dim) !important; }
+  .bank-tag{ color:inherit; }
+  .bank-tag{ font-size:10.5px; padding:3px 9px; border-radius:20px; font-weight:600; white-space:nowrap; }
+  .note{ font-size:10.5px; color:var(--text-dim); }
+  .empty-state{ text-align:center; color:var(--text-dim); padding:36px 0; font-size:13px; }
+  .loading{ color:var(--text-dim); font-size:13px; padding:16px 0; }
+
+  /* ---------- indicadores bars ---------- */
+  .indic-bank-row{ margin-bottom:18px; }
+  .indic-bank-row .head{ display:flex; justify-content:space-between; font-size:12.5px; margin-bottom:6px; }
+  .indic-bank-row .head .name{ font-weight:700; }
+  .bar-track{ display:flex; height:22px; border-radius:4px; overflow:hidden; background:var(--panel-2); border:1px solid var(--line); }
+  .bar-seg{ height:100%; }
+  .bar-legend{ display:flex; gap:16px; font-size:11px; color:var(--text-dim); margin-top:6px; }
+  .bar-legend .dot{ width:8px; height:8px; border-radius:50%; display:inline-block; margin-right:5px; }
+</style>
+
+<div id="panel">
+  <div class="topbar">
+    <div class="brand">
+      <div class="icon">$</div>
+      <div>
+        <h1>Panel de Intereses <span style="color:var(--text-dim); font-weight:400;">· SPL / Spotsline</span></h1>
+        <div class="sub" id="topbar-sub">Cargando…</div>
+        <div class="sub" id="sync-status" style="opacity:.75"></div>
+      </div>
+    </div>
+    <div class="actions">
+      <button class="ghost-btn" id="btn-refresh">↻ Actualizar</button>
+    </div>
+  </div>
+
+  <div class="content">
+
+    <div class="hero">
+      <div>
+        <div class="label">COSTO FINANCIERO TOTAL (PÉRDIDA)</div>
+        <div class="num" id="hero-num">$ 0,00</div>
+        <div class="sub" id="hero-sub">0 operaciones cargadas</div>
+      </div>
+      <div class="stats" id="hero-stats"></div>
+    </div>
+
+    <div class="section-label">BANCOS — TOCÁ UNO PARA FILTRAR TODO EL PANEL</div>
+    <div class="bank-cards" id="bank-cards"><div class="loading">Cargando…</div></div>
+
+    <div class="filters-row">
+      <input type="text" id="search-box" placeholder="Buscar por N° operación o nota…">
+      <select id="filter-mes"><option value="">Todos los meses</option></select>
+      <button class="clear-filters" id="btn-clear-filters">Limpiar filtros</button>
+    </div>
+
+    <div class="tabs">
+      <button class="tab-btn active" data-tab="ops">Operaciones de descuento</button>
+      <button class="tab-btn" data-tab="cartera">Cheques en cartera</button>
+      <button class="tab-btn" data-tab="indic">Indicadores</button>
+    </div>
+
+    <!-- ===================== TAB: OPERACIONES ===================== -->
+    <div class="tab-panel active" id="tab-ops">
+      <div class="upload-zone" id="drop-ops">
+        <p>Arrastrá los comprobantes (PDF Galicia / Patagonia / Provincia, o Excel Credicoop) — podés subir varios juntos</p>
+        <button class="upload-btn" id="btn-pick-ops">Elegir archivos</button>
+        <input type="file" id="file-ops" multiple accept=".pdf,.xls,.xlsx">
+        <div class="upload-status" id="status-ops"></div>
+      </div>
+
+      <div class="section-label">RESUMEN</div>
+      <div class="summary-row" id="summary-ops"><div class="loading">Cargando…</div></div>
+
+      <details class="form-box">
+        <summary>Cargar operación a mano</summary>
+        <div class="form-grid">
+          <div class="field"><label>Banco</label>
+            <select id="f-banco">
+              <option>Galicia</option><option>Patagonia</option><option>Credicoop</option>
+              <option>Provincia</option><option>Otro</option>
+            </select>
+          </div>
+          <div class="field"><label>Fecha</label><input type="date" id="f-fecha"></div>
+          <div class="field"><label>N° operación</label><input type="text" id="f-nro" placeholder="opcional"></div>
+          <div class="field"><label>Importe de cheques</label><input type="number" id="f-importe" step="0.01" placeholder="0.00"></div>
+          <div class="field"><label>Interés</label><input type="number" id="f-interes" step="0.01" placeholder="0.00"></div>
+          <div class="field"><label>IVA s/interés</label><input type="number" id="f-iva" step="0.01" placeholder="0.00"></div>
+          <div class="field"><label>Percepción IVA/IIBB</label><input type="number" id="f-percep" step="0.01" placeholder="0.00"></div>
+          <div class="field"><label>Sellos</label><input type="number" id="f-sellos" step="0.01" placeholder="0.00"></div>
+          <div class="field"><label>Comisión</label><input type="number" id="f-comision" step="0.01" placeholder="0.00"></div>
+          <div class="field wide"><label>Nota</label><input type="text" id="f-nota" placeholder="opcional"></div>
+        </div>
+        <div class="form-actions">
+          <button class="primary" id="btn-add">Agregar operación</button>
+        </div>
+      </details>
+
+      <div class="section-label">OPERACIONES CARGADAS</div>
+      <div id="table-ops"><div class="loading">Cargando…</div></div>
+      <div style="margin-top:14px;"><button class="ghost-btn" id="btn-reset-ops">Borrar todas las operaciones</button></div>
+    </div>
+
+    <!-- ===================== TAB: CARTERA ===================== -->
+    <div class="tab-panel" id="tab-cartera">
+      <div class="upload-zone" id="drop-cartera">
+        <p>Subí el Excel de cheques en cartera (export "Cheque l10n_latam_check")</p>
+        <button class="upload-btn" id="btn-pick-cartera">Elegir archivo</button>
+        <input type="file" id="file-cartera" accept=".xls,.xlsx">
+        <div class="upload-status" id="status-cartera"></div>
+      </div>
+
+      <div class="section-label">RESUMEN</div>
+      <div class="summary-row" id="summary-cartera"><div class="loading">Cargando…</div></div>
+
+      <div class="section-label">CHEQUES EN CARTERA</div>
+      <div id="table-cartera"><div class="loading">Cargando…</div></div>
+      <div style="margin-top:14px;"><button class="ghost-btn" id="btn-reset-cartera">Vaciar cartera</button></div>
+    </div>
+
+    <!-- ===================== TAB: INDICADORES ===================== -->
+    <div class="tab-panel" id="tab-indic">
+      <div class="section-label">RESUMEN GENERAL</div>
+      <div class="summary-row" id="summary-indic"><div class="loading">Cargando…</div></div>
+
+      <div class="section-label">CARTERA vs. VENDIDO — QUÉ TE QUEDA DISPONIBLE</div>
+      <div class="summary-row" id="summary-disponible"><div class="loading">Cargando…</div></div>
+
+      <div class="section-label">CÓMO SE REPARTE LO VENDIDO, POR BANCO</div>
+      <div class="bar-legend" style="margin-bottom:14px;">
+        <span><span class="dot" style="background:var(--green)"></span>Neto (destinado a otros pagos)</span>
+        <span><span class="dot" style="background:var(--red)"></span>Costo financiero (pérdida)</span>
+      </div>
+      <div id="indic-bars"><div class="loading">Cargando…</div></div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+(function(){
+  if(typeof pdfjsLib !== 'undefined'){
+    pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.worker.min.js';
+  }
+
+  const OP_PREFIX = 'op:';
+  const CHK_PREFIX = 'chk:';
+  const bankColor = { Galicia:'#ef4444', Patagonia:'#22c55e', Credicoop:'#f0c419', Provincia:'#4d8dff', Otro:'#8b93a1', 'Sin banco':'#8b93a1' };
+
+  let ops = [];
+  let cartera = [];
+  let filters = { bank:null, month:'', search:'' };
+
+  // ═══════════════════════════════════════════════════════
+  // SUPABASE — sincronización con el Panel General
+  // ═══════════════════════════════════════════════════════
+  const SUPABASE_URL = 'https://ozbynorwhkmevjmftpmy.supabase.co';
+  const SUPABASE_KEY = 'sb_publishable_sBhFezk4bg0OPbSGG59jwA_bt1I1kpp';
+  const SUPABASE_TABLE = 'cheques';
+  const SUPABASE_ROW_ID = 'resumen_v1';
+
+  function computeChequesSummary(){
+    const now = new Date();
+    const mesActual = now.getFullYear()+'-'+String(now.getMonth()+1).padStart(2,'0');
+    const opsMes = ops.filter(o=>monthKey(o.fecha)===mesActual);
+    const totalVendido = opsMes.reduce((s,o)=>s+(Number(o.importe)||0),0);
+    const totalCosto = opsMes.reduce((s,o)=>s+costoTotal(o),0);
+    const totalInteres = opsMes.reduce((s,o)=>s+(Number(o.interes)||0),0);
+    const pctPerdida = totalVendido>0 ? (totalCosto/totalVendido*100) : 0;
+    return {
+      mes: mesActual,
+      totalVendido, totalCosto, totalInteres, pctPerdida,
+      cantOperacionesMes: opsMes.length,
+      cheteraEnCartera: cartera.length
+    };
+  }
+
+  let syncTimer = null;
+  function scheduleSyncSupabase(){
+    clearTimeout(syncTimer);
+    syncTimer = setTimeout(syncSupabaseNow, 800); // agrupa cambios seguidos en un solo envío
+  }
+  async function syncSupabaseNow(){
+    const statusEl = document.getElementById('sync-status');
+    if(statusEl) statusEl.textContent = '⏳ Sincronizando…';
+    try{
+      const summary = computeChequesSummary();
+      const res = await fetch(`${SUPABASE_URL}/rest/v1/${SUPABASE_TABLE}?on_conflict=id`, {
+        method:'POST',
+        headers:{
+          'apikey': SUPABASE_KEY,
+          'Authorization': 'Bearer '+SUPABASE_KEY,
+          'Content-Type':'application/json',
+          'Prefer':'resolution=merge-duplicates,return=minimal'
+        },
+        body: JSON.stringify({ id: SUPABASE_ROW_ID, valor: summary, updated_at: new Date().toISOString() })
+      });
+      if(!res.ok){
+        const bodyText = await res.text().catch(()=> '');
+        throw new Error('HTTP '+res.status+' — '+bodyText);
+      }
+      if(statusEl) statusEl.textContent = '✓ Sincronizado con el Panel General';
+    }catch(e){
+      console.error('Error sincronizando con Supabase:', e);
+      if(statusEl) statusEl.textContent = '⚠ No se pudo sincronizar';
+    }
+  }
+
+  // ---------- helpers ----------
+  function parseAR(s){
+    if(s===undefined||s===null) return 0;
+    if(typeof s === 'number') return s;
+    s = String(s).replace(/\$/g,'').trim();
+    if(s==='') return 0;
+    const hasComma = s.includes(',');
+    const hasDot = s.includes('.');
+    if(hasComma && hasDot){
+      // el separador que aparece más a la derecha es el decimal
+      if(s.lastIndexOf(',') > s.lastIndexOf('.')){
+        s = s.replace(/\./g,'').replace(/,/g,'.'); // formato AR: 1.234.567,89
+      } else {
+        s = s.replace(/,/g,''); // formato US: 1,234,567.89
+      }
+    } else if(hasComma){
+      const m = s.match(/,(\d+)$/);
+      s = (m && m[1].length===2) ? s.replace(/,/g,'.') : s.replace(/,/g,'');
+    } else if(hasDot){
+      const dotCount = (s.match(/\./g)||[]).length;
+      if(dotCount > 1){ s = s.replace(/\./g,''); }
+      else {
+        const m = s.match(/\.(\d+)$/);
+        if(m && m[1].length===3) s = s.replace(/\./g,'');
+      }
+    }
+    const n = parseFloat(s);
+    return isNaN(n)?0:n;
+  }
+  function fmt(n){ n = Number(n)||0; return n.toLocaleString('es-AR', {minimumFractionDigits:2, maximumFractionDigits:2}); }
+  function money(n){ return '$ ' + fmt(n); }
+  function toISO(dmy){
+    if(!dmy) return '';
+    const m = dmy.match(/(\d{2})\/(\d{2})\/(\d{4})/);
+    if(m) return `${m[3]}-${m[2]}-${m[1]}`;
+    if(/^\d{4}-\d{2}-\d{2}$/.test(dmy)) return dmy;
+    return '';
+  }
+  function monthKey(iso){ if(!iso) return 'sin-fecha'; return iso.slice(0,7); }
+  function monthLabel(key){
+    if(key==='sin-fecha') return 'Sin fecha';
+    const [y,m] = key.split('-');
+    const names = ['ene','feb','mar','abr','may','jun','jul','ago','sep','oct','nov','dic'];
+    return names[parseInt(m,10)-1] + ' ' + y;
+  }
+  function costoTotal(op){
+    return (Number(op.interes)||0)+(Number(op.iva)||0)+(Number(op.percep)||0)+(Number(op.sellos)||0)+(Number(op.comision)||0);
+  }
+  function uid(){ return 'x'+Date.now()+Math.random().toString(36).slice(2,7); }
+  function tag(banco){
+    const c = bankColor[banco]||'#8b93a1';
+    return `<span class="bank-tag" style="background:${c}22;color:${c}">${banco}</span>`;
+  }
+
+  // ---------- storage ----------
+  async function storeOp(op){ try{ return await window.storage.set(OP_PREFIX+op.id, JSON.stringify(op), false); }catch(e){ return null; } }
+  async function deleteOp(id){ try{ await window.storage.delete(OP_PREFIX+id, false); }catch(e){} }
+  async function storeChk(c){ try{ return await window.storage.set(CHK_PREFIX+c.id, JSON.stringify(c), false); }catch(e){ return null; } }
+  async function deleteChk(id){ try{ await window.storage.delete(CHK_PREFIX+id, false); }catch(e){} }
+
+  async function loadOps(){
+    let keys = [];
+    try{ const r = await window.storage.list(OP_PREFIX,false); keys=(r&&r.keys)||[]; }catch(e){}
+    if(keys.length===0){
+      ops = seedOps();
+      for(const o of ops) await storeOp(o);
+    } else {
+      ops = [];
+      for(const k of keys){ try{ const r = await window.storage.get(k,false); if(r&&r.value) ops.push(JSON.parse(r.value)); }catch(e){} }
+    }
+    ops.sort((a,b)=>(a.fecha||'').localeCompare(b.fecha||''));
+  }
+  async function loadCartera(){
+    let keys = [];
+    try{ const r = await window.storage.list(CHK_PREFIX,false); keys=(r&&r.keys)||[]; }catch(e){}
+    cartera = [];
+    for(const k of keys){ try{ const r = await window.storage.get(k,false); if(r&&r.value) cartera.push(JSON.parse(r.value)); }catch(e){} }
+    cartera.sort((a,b)=>(a.fechaPago||'').localeCompare(b.fechaPago||''));
+  }
+
+  function seedOps(){
+    const rows = [
+      ['Galicia','2026-08-21','290991111', 31390217.81, 2951643.52, 309922.57, 23613.15, 106296.74, 0],
+      ['Galicia','2026-08-21','290985615', 260160.04, 6280.90, 659.49, 0, 213.83, 0],
+      ['Galicia','2026-08-24','291168037', 10901284.05, 1031495.20, 108307.00, 8251.97, 37581.42, 0],
+      ['Galicia','2026-08-25','291289773', 5023161.32, 162018.53, 17011.96, 1254.40, 5713.53, 0],
+      ['Galicia','2026-08-25','291276986', 1660304.32, 159475.29, 16744.91, 1275.80, 5809.46, 0],
+      ['Galicia','2026-08-25','291270539', 1577807.10, 63428.44, 6659.99, 503.50, 2243.67, 0],
+      ['Galicia','2026-08-26','291373227', 5920071.12, 288910.06, 30335.55, 2311.28, 10216.16, 0],
+      ['Galicia','2026-08-28','291671228', 872425.84, 33186.92, 3484.62, 265.49, 1161.64, 0],
+      ['Galicia','2026-08-28','291647847', 1284135.03, 38420.15, 4034.12, 307.36, 1336.64, 0],
+      ['Galicia','2026-08-28','291631331', 8963967.40, 481165.49, 50522.38, 3849.33, 17042.55, 0],
+      ['Galicia','2026-08-28','291626552', 7535013.28, 557265.64, 58512.88, 4458.13, 19955.55, 0],
+      ['Galicia','2026-08-28','291618624', 7122278.76, 704150.28, 73935.76, 5633.22, 25646.87, 0],
+      ['Patagonia','2026-08-05','3131731', 13210920.41, 602971.60, 63312.00, 9044.60+4760.20, 25667.14, 47745.95+5013.32+695.54],
+      ['Patagonia','2026-08-10','3137763', 7801164.04, 159380.90, 16735.00, 2358.45+1211.64, 7294.61, 19661.22+2064.43+294.92],
+      ['Patagonia','2026-08-13','3142699', 5270854.53, 74276.60, 7799.05, 1107.34+590.58, 3770.53, 41883.28+4397.75+616.87],
+      ['Credicoop','2026-08-26','333635450', 311084.54, 282.86, 194.10, 14.79, 0, 0],
+      ['Credicoop','2026-08-28','333636828', 1468594.13, 28527.80, 2995.42+427.92, 228.22, 0, 1565.71],
+      ['Credicoop','2026-08-31','333637128', 3121982.63, 2822.91, 296.41, 22.58, 0, 0]
+    ];
+    return rows.map((r,i)=>({ id:'seed'+i, banco:r[0], fecha:r[1], nro:r[2], importe:r[3],
+      interes:r[4], iva:r[5], percep:r[6], sellos:r[7], comision:r[8], nota:'' }));
+  }
+
+  // ---------- PDF / Excel parsing ----------
+  async function fileToText(file){
+    const buf = await file.arrayBuffer();
+    const pdf = await pdfjsLib.getDocument({data:buf}).promise;
+    let text = '';
+    for(let i=1;i<=pdf.numPages;i++){
+      const page = await pdf.getPage(i);
+      const content = await page.getTextContent();
+      text += content.items.map(it=>it.str).join(' ') + ' ';
+    }
+    return text.replace(/\s+/g,' ');
+  }
+  async function fileToSheet(file){
+    const buf = await file.arrayBuffer();
+    const wb = XLSX.read(buf, {type:'array'});
+    const sh = wb.Sheets[wb.SheetNames[0]];
+    return XLSX.utils.sheet_to_json(sh, {header:1, raw:false, defval:''});
+  }
+
+  function parseGalicia(text){
+    const out = [];
+    const reBlock = /Cantidad de cheques\s+Total de cheques\s+Inter[eé]s\s+IVA sin inter[eé]s\s+(\d+)\s+\$\s*([\d.,]+)\s+\$\s*([\d.,]+)\s+\$\s*([\d.,]+)\s+IVA Percepci[oó]n\s+Sellos\s+Ingresos Brutos\s+Total con descuentos\s+\$\s*([\d.,]+)\s+\$\s*([\d.,]+)\s+\$\s*([\d.,]+)\s+\$\s*([\d.,]+)/gi;
+    const reHead = /N[°º]\s*de operaci[oó]n\s+Tipo de Venta\s+Fecha ejecutada\s+(\d+)\s+.*?(\d{2}\/\d{2}\/\d{4})/gi;
+    let heads = [], m;
+    while((m = reHead.exec(text))) heads.push({nro:m[1], fecha:m[2]});
+    let i=0;
+    while((m = reBlock.exec(text))){
+      const h = heads[i]||{};
+      out.push({ banco:'Galicia', nro:h.nro||'', fecha:toISO(h.fecha)||'', importe:parseAR(m[2]),
+        interes:parseAR(m[3]), iva:parseAR(m[4]), percep:parseAR(m[5]), sellos:parseAR(m[6]),
+        comision:0, nota:'' });
+      i++;
+    }
+    return out;
+  }
+  function parsePatagonia(text){
+    const out = [];
+    const reHead = /Operaci[oó]n nro\.\s+(\d+)\s+Fecha\s+(\d{2}\/\d{2}\/\d{4})\s+Estado solicitud/i;
+    const reImporte = /Importe\s+\$\s*([\d.,]+)\s+Tasa/i;
+    const reInt = /Intereses\s+\$\s*([\d.,]+)\s+\$\s*([\d.,]+)\s+\$\s*([\d.,]+)\s+\$\s*([\d.,]+)/i;
+    const reSellos = /Impuesto de sellos\s+\$\s*([\d.,]+)/i;
+    const reCom = /Comisi[oó]n VACO\s+\$\s*([\d.,]+)\s+\$\s*([\d.,]+)\s+\$\s*([\d.,]+)/i;
+    const head = reHead.exec(text), imp = reImporte.exec(text), it = reInt.exec(text),
+          se = reSellos.exec(text), co = reCom.exec(text);
+    if(it){
+      out.push({ banco:'Patagonia', nro:head?head[1]:'', fecha: head?(toISO(head[2])||''):'', importe: imp?parseAR(imp[1]):0,
+        interes:parseAR(it[1]), iva:parseAR(it[2]), percep:parseAR(it[3])+parseAR(it[4]),
+        sellos: se?parseAR(se[1]):0,
+        comision: co?(parseAR(co[1])+parseAR(co[2])+parseAR(co[3])):0,
+        nota: head? '' : 'No se detectó la fecha automáticamente, completala a mano' });
+    }
+    return out;
+  }
+  function parseProvincia(text){
+    const out = [];
+    const re = /(\d{2}\/\d{2}\/\d{4})\s+COMISION E INTERESES DESCUENTO DOCUMENTO\s+(-?[\d.,]+)/gi;
+    let m;
+    while((m = re.exec(text))){
+      const amt = Math.abs(parseAR(m[2]));
+      const tail = text.slice(m.index, m.index+400);
+      const pm = tail.match(/IMPUESTO I\.BRUTOS - PERCEPCION\s+(-?[\d.,]+)/i);
+      const percep = pm? Math.abs(parseAR(pm[1])) : 0;
+      out.push({ banco:'Provincia', nro:'', fecha:toISO(m[1])||'', importe:0,
+        interes:amt, iva:0, percep:percep, sellos:0, comision:0,
+        nota:'Provincia no discrimina interés de comisión en el extracto' });
+    }
+    return out;
+  }
+  function parseCredicoopSheet(aoa){
+    const out = [];
+    for(const row of aoa){
+      const idxConcept = row.findIndex(c => String(c).trim().toLowerCase() === 'interes');
+      if(idxConcept === -1) continue;
+      let fecha = '';
+      for(const cell of row){
+        const mm = String(cell).match(/^(\d{2})\/(\d{2})\/(\d{2})$/);
+        if(mm){ fecha = `20${mm[3]}-${mm[2]}-${mm[1]}`; break; }
+      }
+      let amount = 0;
+      for(let i=row.length-1;i>=0;i--){
+        const v = String(row[i]).trim();
+        if(/^-?[\d.,]+$/.test(v) && /[\d]/.test(v)){
+          const n = Math.abs(parseAR(v));
+          if(n > 0){ amount = n; break; }
+        }
+      }
+      if(amount>0) out.push({ banco:'Credicoop', nro:'', fecha, importe:0, interes:amount, iva:0, percep:0, sellos:0, comision:0, nota:'' });
+    }
+    return out;
+  }
+
+  // Formato "Consulta de Movimientos" de Provincia: hoja 'report' con columnas Fecha / Descripción / Importe / Saldo
+  function parseProvinciaMovimientosXls(aoa){
+    const out = [];
+    let idx = null;
+    for(const row of aoa){
+      const cells = row.map(c=>String(c).trim());
+      const fi = cells.indexOf('Fecha');
+      const di = cells.findIndex(c=>c.toLowerCase().startsWith('descripci'));
+      const ii = cells.indexOf('Importe');
+      if(fi>-1 && di>-1 && ii>-1){ idx = {fecha:fi, desc:di, importe:ii}; break; }
+    }
+    if(!idx) return out;
+    const monthMap = {ene:'01',feb:'02',mar:'03',abr:'04',may:'05',jun:'06',jul:'07',ago:'08',sep:'09',oct:'10',nov:'11',dic:'12'};
+    for(let i=0;i<aoa.length;i++){
+      const row = aoa[i];
+      const desc = String(row[idx.desc]||'');
+      if(!/COMISION E INTERESES DESCUENTO DOCUMENTO/i.test(desc)) continue;
+      const fechaRaw = String(row[idx.fecha]||'');
+      const m = fechaRaw.match(/(\d{1,2})-([a-zA-Z]{3})-(\d{4})/);
+      let fecha = '';
+      if(m){ const mm = monthMap[m[2].toLowerCase()]; if(mm) fecha = `${m[3]}-${mm}-${m[1].padStart(2,'0')}`; }
+      const amount = Math.abs(parseAR(row[idx.importe]));
+      // el "VALORES NEGOCIADOS" que sigue (dentro del mismo bloque) es el importe nominal del cheque descontado
+      let importeVendido = 0;
+      for(let j=i+1; j<Math.min(i+10, aoa.length); j++){
+        if(/VALORES NEGOCIADOS/i.test(String(aoa[j][idx.desc]||''))){
+          importeVendido = Math.abs(parseAR(aoa[j][idx.importe]));
+          break;
+        }
+      }
+      if(amount>0){
+        out.push({ banco:'Provincia', nro:'', fecha, importe:importeVendido, interes:amount, iva:0, percep:0, sellos:0, comision:0,
+          nota:'Provincia no discrimina interés de comisión en el extracto' });
+      }
+    }
+    return out;
+  }
+  function detectBankFromText(text){
+    if(/BANCOPATAGONIA|ECHEQs Descuento/i.test(text)) return 'Patagonia';
+    if(/Galicia/i.test(text) && /Comprobante final/i.test(text)) return 'Galicia';
+    if(/Banco\s*Provincia/i.test(text)) return 'Provincia';
+    return null;
+  }
+  async function processOpsFile(file){
+    const ext = file.name.split('.').pop().toLowerCase();
+    try{
+      if(ext === 'pdf'){
+        if(typeof pdfjsLib === 'undefined'){
+          return {ok:false, msg:`No se pudo cargar el lector de PDF (revisá tu conexión y volvé a intentar). "${file.name}" no se procesó.`};
+        }
+        const text = await fileToText(file);
+        const bank = detectBankFromText(text);
+        let found = [];
+        if(bank === 'Galicia') found = parseGalicia(text);
+        else if(bank === 'Patagonia') found = parsePatagonia(text);
+        else if(bank === 'Provincia') found = parseProvincia(text);
+        if(found.length === 0){
+          const detected = bank ? `banco detectado: ${bank}, pero no pude leer los importes` : 'no reconocí el banco';
+          return {ok:false, msg:`"${file.name}": ${detected}. Cargala a mano abajo.`};
+        }
+        for(const o of found){ o.id = uid(); await storeOp(o); ops.push(o); }
+        return {ok:true, msg:`${file.name}: se agregaron ${found.length} operación(es) de ${found[0].banco}.`};
+      } else {
+        const aoa = await fileToSheet(file);
+        let found = parseProvinciaMovimientosXls(aoa);
+        let label = 'Provincia';
+        if(found.length === 0){ found = parseCredicoopSheet(aoa); label = 'Credicoop'; }
+        if(found.length === 0) return {ok:false, msg:`No encontré filas de interés en "${file.name}" (probé formato Provincia y Credicoop).`};
+        for(const o of found){ o.id = uid(); await storeOp(o); ops.push(o); }
+        return {ok:true, msg:`${file.name}: se agregaron ${found.length} operación(es) de ${label}.`};
+      }
+    }catch(e){ return {ok:false, msg:`Error leyendo "${file.name}": ${e.message}`}; }
+  }
+  function detectDiario(diario){
+    if(!diario) return 'Sin banco';
+    const d = diario.toUpperCase();
+    if(d.includes('PATAGONIA')) return 'Patagonia';
+    if(d.includes('GALICIA')) return 'Galicia';
+    if(d.includes('CREDICOOP')) return 'Credicoop';
+    if(d.includes('PROVINCIA')) return 'Provincia';
+    return 'Otro';
+  }
+  async function processCarteraFile(file){
+    try{
+      const aoa = await fileToSheet(file);
+      if(aoa.length < 2) return {ok:false, msg:'El archivo está vacío.'};
+      const header = aoa[0].map(h=>String(h).trim());
+      const idx = {
+        cliente: header.indexOf('Cliente/Proveedor'), cuit: header.indexOf('CUIT del Emisor'),
+        diario: header.indexOf('Diario Actual'), fecha: header.indexOf('Fecha'),
+        fechaPago: header.indexOf('Fecha de Pago'), importe: header.indexOf('Importe'),
+        memo: header.indexOf('Memo'), numero: header.indexOf('Número')
+      };
+      if(idx.fechaPago === -1 || idx.importe === -1) return {ok:false, msg:`"${file.name}" no tiene el formato esperado.`};
+      const existingKeys = new Set(cartera.map(c => c.numero+'|'+c.importe+'|'+c.fechaPago));
+      let added = 0;
+      for(let i=1;i<aoa.length;i++){
+        const row = aoa[i];
+        if(!row || row.length===0) continue;
+        const numero = idx.numero>-1? String(row[idx.numero]||'') : '';
+        const importe = idx.importe>-1? parseAR(row[idx.importe]) : 0;
+        const fechaPago = idx.fechaPago>-1? String(row[idx.fechaPago]||'').slice(0,10) : '';
+        if(!fechaPago && !importe) continue;
+        const key = numero+'|'+importe+'|'+fechaPago;
+        if(existingKeys.has(key)) continue;
+        const c = { id: uid(), cliente: idx.cliente>-1? String(row[idx.cliente]||'') : '',
+          cuit: idx.cuit>-1? String(row[idx.cuit]||'') : '',
+          banco: detectDiario(idx.diario>-1? String(row[idx.diario]||'') : ''),
+          fecha: idx.fecha>-1? String(row[idx.fecha]||'').slice(0,10) : '',
+          fechaPago, importe, memo: idx.memo>-1? String(row[idx.memo]||'') : '', numero };
+        await storeChk(c); cartera.push(c); existingKeys.add(key); added++;
+      }
+      return {ok:true, msg:`"${file.name}": se agregaron ${added} cheque(s) a la cartera (se omitieron duplicados).`};
+    }catch(e){ return {ok:false, msg:`Error leyendo "${file.name}": ${e.message}`}; }
+  }
+
+  // ---------- filtering helpers ----------
+  function filteredOps(){
+    return ops.filter(o =>
+      (!filters.bank || o.banco===filters.bank) &&
+      (!filters.month || monthKey(o.fecha)===filters.month) &&
+      (!filters.search || (o.nro||'').toLowerCase().includes(filters.search) || (o.nota||'').toLowerCase().includes(filters.search))
+    );
+  }
+  function filteredCartera(){
+    return cartera.filter(c =>
+      (!filters.bank || c.banco===filters.bank) &&
+      (!filters.month || monthKey(c.fechaPago)===filters.month)
+    );
+  }
+
+  // ---------- top-level render: header, hero, bank cards, month select ----------
+  function renderTop(){
+    const fo = filteredOps(), fc = filteredCartera();
+    const totalInteres = fo.reduce((s,o)=>s+(Number(o.interes)||0),0);
+    const totalCosto = fo.reduce((s,o)=>s+costoTotal(o),0);
+    const totalVendido = fo.reduce((s,o)=>s+(Number(o.importe)||0),0);
+    const pctPerdida = totalVendido>0 ? (totalCosto/totalVendido*100) : 0;
+    document.getElementById('hero-num').textContent = money(totalCosto);
+    document.getElementById('hero-sub').textContent =
+      `Vendiste ${fo.length} cheque(s) por ${money(totalVendido)} y perdiste ${money(totalCosto)} (${pctPerdida.toFixed(2)}%)${filters.bank?' · filtrado por '+filters.bank:''}`;
+    document.getElementById('topbar-sub').textContent = `${ops.length} operaciones · ${cartera.length} cheques en cartera`;
+    document.getElementById('hero-stats').innerHTML = `
+      <div class="st"><div class="n">${money(totalVendido)}</div><div class="l">Vendido</div></div>
+      <div class="st"><div class="n">${pctPerdida.toFixed(2)}%</div><div class="l">% pérdida</div></div>
+      <div class="st"><div class="n">${money(totalInteres)}</div><div class="l">Interés</div></div>
+      <div class="st"><div class="n">${fc.length}</div><div class="l">Chq. en cartera</div></div>
+    `;
+
+    // bank cards
+    const banks = [...new Set([...ops.map(o=>o.banco), ...cartera.map(c=>c.banco)])].sort();
+    const cardsWrap = document.getElementById('bank-cards');
+    if(banks.length===0){
+      cardsWrap.innerHTML = '<div class="empty-state">Subí un comprobante para empezar.</div>';
+    } else {
+      cardsWrap.innerHTML = banks.map(b=>{
+        const bOps = ops.filter(o=>o.banco===b);
+        const interes = bOps.reduce((s,o)=>s+(Number(o.interes)||0),0);
+        const costo = bOps.reduce((s,o)=>s+costoTotal(o),0);
+        const importe = bOps.reduce((s,o)=>s+(Number(o.importe)||0),0);
+        const sinImporte = importe===0 && interes>0;
+        const tasaB = importe>0 ? (interes/importe*100) : 0;
+        const color = bankColor[b]||'#8b93a1';
+        const active = filters.bank===b;
+        return `<div class="bank-card${active?' active':''}" style="--card-color:${color}" data-bank="${b}">
+          <div class="label">${b} — ${sinImporte?'interés':'vendido'}</div>
+          <div class="num">${sinImporte? money(interes) : money(importe)}</div>
+          <div class="sub">${sinImporte? 'el extracto no trae el monto vendido, solo el costo' : `interés ${money(interes)} · tasa prom. ${tasaB.toFixed(2)}%`}</div>
+          <div class="hint">${active?'✓ filtrando · tocá para quitar':'clic para filtrar'}</div>
+        </div>`;
+      }).join('');
+    }
+    cardsWrap.querySelectorAll('.bank-card').forEach(card=>{
+      card.addEventListener('click', ()=>{
+        filters.bank = filters.bank===card.dataset.bank? null : card.dataset.bank;
+        renderAll();
+        document.querySelector('.tabs').scrollIntoView({behavior:'smooth', block:'start'});
+      });
+    });
+
+    // month select
+    const mesSel = document.getElementById('filter-mes');
+    const cur = mesSel.value;
+    const meses = [...new Set([...ops.map(o=>monthKey(o.fecha)), ...cartera.map(c=>monthKey(c.fechaPago))])].filter(m=>m!=='sin-fecha').sort();
+    mesSel.innerHTML = '<option value="">Todos los meses</option>' + meses.map(m=>`<option value="${m}">${monthLabel(m)}</option>`).join('');
+    mesSel.value = filters.month || '';
+  }
+
+  // ---------- render: ops tab ----------
+  function renderOps(){
+    const filtered = filteredOps();
+    const byBank = {};
+    let totalInteres=0, totalCosto=0, totalImporte=0, interesConImporte=0;
+    for(const o of filtered){
+      byBank[o.banco] = byBank[o.banco]||{interes:0,costo:0,importe:0,count:0};
+      byBank[o.banco].interes += Number(o.interes)||0;
+      byBank[o.banco].costo += costoTotal(o);
+      byBank[o.banco].importe += Number(o.importe)||0;
+      byBank[o.banco].count += 1;
+      totalInteres += Number(o.interes)||0;
+      totalCosto += costoTotal(o);
+      totalImporte += Number(o.importe)||0;
+      if(Number(o.importe)>0) interesConImporte += Number(o.interes)||0;
+    }
+    const tasaProm = totalImporte>0 ? (interesConImporte/totalImporte*100) : 0;
+    const summary = document.getElementById('summary-ops');
+    if(filtered.length===0){
+      summary.innerHTML = '<div class="empty-state">No hay operaciones para este filtro.</div>';
+    } else {
+      let html = '';
+      for(const b of Object.keys(byBank).sort()){
+        const d = byBank[b];
+        const sinImporte = d.importe===0 && d.interes>0;
+        const tasaB = d.importe>0 ? (d.interes/d.importe*100) : 0;
+        html += `<div class="card">
+          <div class="bank">${b} — ${d.count} op.</div>
+          <div class="num" style="color:${bankColor[b]}">${sinImporte? money(d.interes) : money(d.importe)}</div>
+          <div class="sub" style="margin-top:6px;color:var(--text-dim);font-size:11px;">${sinImporte? 'interés (sin monto de venta en el extracto)' : `interés ${money(d.interes)} · tasa prom. ${tasaB.toFixed(2)}%`}</div>
+        </div>`;
+      }
+      html += `<div class="card total"><div class="bank">Monto total vendido</div><div class="num">${money(totalImporte)}</div><div class="sub" style="margin-top:6px;color:var(--text-dim);font-size:11px;">${filtered.length} operación(es)</div></div>`;
+      html += `<div class="card total"><div class="bank">Tasa promedio (interés/vendido)</div><div class="num">${tasaProm.toFixed(2)}%</div></div>`;
+      html += `<div class="card total"><div class="bank">Total interés</div><div class="num">${money(totalInteres)}</div></div>`;
+      html += `<div class="card total"><div class="bank">Total costo financiero</div><div class="num">${money(totalCosto)}</div></div>`;
+      summary.innerHTML = html;
+    }
+    const wrap = document.getElementById('table-ops');
+    if(filtered.length===0){
+      wrap.innerHTML = '<div class="empty-state">Subí un comprobante o cargá una operación a mano.</div>';
+      return;
+    }
+    const rows = filtered.slice().reverse().map(o=>`
+      <tr>
+        <td>${tag(o.banco)}</td>
+        <td>${o.fecha||'—'}</td>
+        <td>${o.nro||'—'}</td>
+        <td class="num">${money(o.importe)}</td>
+        <td class="num">${money(o.interes)}</td>
+        <td class="num">${money(costoTotal(o))}</td>
+        <td>${o.nota?`<span class="note">${o.nota}</span>`:''}</td>
+        <td><button class="link" data-id="${o.id}">borrar</button></td>
+      </tr>`).join('');
+    wrap.innerHTML = `<table><thead><tr>
+      <th>Banco</th><th>Fecha</th><th>N° op.</th><th class="num">Importe</th>
+      <th class="num">Interés</th><th class="num">Costo fin.</th><th></th><th></th>
+    </tr></thead><tbody>${rows}</tbody></table>`;
+    wrap.querySelectorAll('button.link').forEach(btn=>{
+      btn.addEventListener('click', async ()=>{
+        const id = btn.dataset.id;
+        ops = ops.filter(o=>o.id!==id);
+        await deleteOp(id);
+        renderAll();
+      });
+    });
+  }
+
+  // ---------- render: cartera tab ----------
+  function renderCartera(){
+    const filtered = filteredCartera();
+    const byBank = {};
+    let total=0;
+    for(const c of filtered){
+      byBank[c.banco] = byBank[c.banco]||{importe:0,count:0};
+      byBank[c.banco].importe += Number(c.importe)||0;
+      byBank[c.banco].count += 1;
+      total += Number(c.importe)||0;
+    }
+    const summary = document.getElementById('summary-cartera');
+    if(filtered.length===0){
+      summary.innerHTML = '<div class="empty-state">No hay cheques en cartera para este filtro.</div>';
+    } else {
+      let html = '';
+      for(const b of Object.keys(byBank).sort()){
+        html += `<div class="card"><div class="bank">${b} — ${byBank[b].count} cheque(s)</div><div class="num" style="color:${bankColor[b]}">${money(byBank[b].importe)}</div></div>`;
+      }
+      html += `<div class="card total"><div class="bank">Total en cartera (${filtered.length})</div><div class="num">${money(total)}</div></div>`;
+      summary.innerHTML = html;
+    }
+    const wrap = document.getElementById('table-cartera');
+    if(filtered.length===0){
+      wrap.innerHTML = '<div class="empty-state">Subí el Excel de cheques en cartera.</div>';
+      return;
+    }
+    const rows = filtered.slice().reverse().map(c=>`
+      <tr>
+        <td>${tag(c.banco)}</td>
+        <td>${c.cliente||'—'}</td>
+        <td>${c.numero||'—'}</td>
+        <td>${c.fechaPago||'—'}</td>
+        <td class="num">${money(c.importe)}</td>
+        <td><button class="link" data-id="${c.id}">borrar</button></td>
+      </tr>`).join('');
+    wrap.innerHTML = `<table><thead><tr>
+      <th>Banco</th><th>Librador</th><th>N° cheque</th><th>Vto. pago</th><th class="num">Importe</th><th></th>
+    </tr></thead><tbody>${rows}</tbody></table>`;
+    wrap.querySelectorAll('button.link').forEach(btn=>{
+      btn.addEventListener('click', async ()=>{
+        const id = btn.dataset.id;
+        cartera = cartera.filter(c=>c.id!==id);
+        await deleteChk(id);
+        renderAll();
+      });
+    });
+  }
+
+  // ---------- render: indicadores tab ----------
+  function renderIndicadores(){
+    const fo = filteredOps(), fc = filteredCartera();
+    const ingresadoCount = fc.length, ingresadoImporte = fc.reduce((s,c)=>s+(Number(c.importe)||0),0);
+    const vendidoCount = fo.length, vendidoImporte = fo.reduce((s,o)=>s+(Number(o.importe)||0),0);
+    const perdida = fo.reduce((s,o)=>s+costoTotal(o),0);
+    const neto = vendidoImporte - perdida;
+    const tasaPct = vendidoImporte>0 ? (perdida/vendidoImporte*100) : 0;
+    const quedanCount = Math.max(ingresadoCount - vendidoCount, 0);
+    const quedanImporte = ingresadoImporte - vendidoImporte;
+
+    const summary = document.getElementById('summary-indic');
+    summary.innerHTML = `
+      <div class="card"><div class="bank">Cheques ingresados en cartera</div><div class="num">${ingresadoCount}</div><div class="sub" style="margin-top:6px;color:var(--text-dim);font-size:11px;">${money(ingresadoImporte)}</div></div>
+      <div class="card"><div class="bank">Cheques vendidos (descontados)</div><div class="num">${vendidoCount}</div><div class="sub" style="margin-top:6px;color:var(--text-dim);font-size:11px;">${money(vendidoImporte)}</div></div>
+      <div class="card loss"><div class="bank">Pérdida (costo financiero)</div><div class="num">${money(perdida)}</div><div class="sub" style="margin-top:6px;color:var(--text-dim);font-size:11px;">${tasaPct.toFixed(1)}% de lo vendido</div></div>
+      <div class="card net"><div class="bank">Neto de lo vendido — a otros pagos</div><div class="num">${money(neto)}</div><div class="sub" style="margin-top:6px;color:var(--text-dim);font-size:11px;">vendido − pérdida</div></div>
+    `;
+
+    const wrapDisp = document.getElementById('summary-disponible');
+    wrapDisp.innerHTML = `
+      <div class="card"><div class="bank">En cartera (sin vender)</div><div class="num">${ingresadoCount} cheque(s)</div><div class="sub" style="margin-top:6px;color:var(--text-dim);font-size:11px;">${money(ingresadoImporte)}</div></div>
+      <div class="card"><div class="bank">De esos, vendiste</div><div class="num">${vendidoCount} cheque(s)</div><div class="sub" style="margin-top:6px;color:var(--text-dim);font-size:11px;">${money(vendidoImporte)}</div></div>
+      <div class="card net"><div class="bank">Te quedan disponibles para otros pagos</div><div class="num">${quedanCount} cheque(s)</div><div class="sub" style="margin-top:6px;color:var(--text-dim);font-size:11px;">${money(quedanImporte)}</div></div>
+    `;
+
+    const banks = [...new Set(fo.map(o=>o.banco))].sort();
+    const barsWrap = document.getElementById('indic-bars');
+    if(banks.length===0){
+      barsWrap.innerHTML = '<div class="empty-state">No hay operaciones para este filtro.</div>';
+      return;
+    }
+    barsWrap.innerHTML = banks.map(b=>{
+      const bOps = fo.filter(o=>o.banco===b);
+      const bruto = bOps.reduce((s,o)=>s+(Number(o.importe)||0),0);
+      const costo = bOps.reduce((s,o)=>s+costoTotal(o),0);
+      const netoB = bruto - costo;
+      const pctCosto = bruto>0? (costo/bruto*100) : 0;
+      const pctNeto = 100 - pctCosto;
+      return `<div class="indic-bank-row">
+        <div class="head"><span class="name">${b}</span><span>${money(bruto)} vendido — pérdida ${pctCosto.toFixed(1)}%</span></div>
+        <div class="bar-track">
+          <div class="bar-seg" style="width:${pctNeto}%;background:var(--green)"></div>
+          <div class="bar-seg" style="width:${pctCosto}%;background:var(--red)"></div>
+        </div>
+      </div>`;
+    }).join('');
+  }
+
+  function renderAll(){
+    renderTop();
+    renderOps();
+    renderCartera();
+    renderIndicadores();
+    scheduleSyncSupabase();
+  }
+
+  // ---------- events ----------
+  document.querySelectorAll('.tab-btn').forEach(btn=>{
+    btn.addEventListener('click', ()=>{
+      document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
+      document.querySelectorAll('.tab-panel').forEach(p=>p.classList.remove('active'));
+      btn.classList.add('active');
+      document.getElementById('tab-'+btn.dataset.tab).classList.add('active');
+    });
+  });
+
+  document.getElementById('filter-mes').addEventListener('change', (e)=>{ filters.month = e.target.value; renderAll(); });
+  document.getElementById('search-box').addEventListener('input', (e)=>{ filters.search = e.target.value.toLowerCase(); renderOps(); });
+  document.getElementById('btn-clear-filters').addEventListener('click', ()=>{
+    filters = { bank:null, month:'', search:'' };
+    document.getElementById('search-box').value = '';
+    renderAll();
+  });
+  document.getElementById('btn-refresh').addEventListener('click', async ()=>{
+    await loadOps(); await loadCartera(); renderAll();
+  });
+
+  document.getElementById('btn-add').addEventListener('click', async ()=>{
+    const fecha = document.getElementById('f-fecha').value;
+    const interes = document.getElementById('f-interes').value;
+    if(!fecha || interes===''){ alert('Cargá al menos la fecha y el interés.'); return; }
+    const op = {
+      id: uid(), banco: document.getElementById('f-banco').value,
+      fecha, nro: document.getElementById('f-nro').value,
+      importe: parseFloat(document.getElementById('f-importe').value)||0,
+      interes: parseFloat(interes)||0,
+      iva: parseFloat(document.getElementById('f-iva').value)||0,
+      percep: parseFloat(document.getElementById('f-percep').value)||0,
+      sellos: parseFloat(document.getElementById('f-sellos').value)||0,
+      comision: parseFloat(document.getElementById('f-comision').value)||0,
+      nota: document.getElementById('f-nota').value
+    };
+    await storeOp(op);
+    ops.push(op);
+    ['f-nro','f-importe','f-interes','f-iva','f-percep','f-sellos','f-comision','f-nota'].forEach(id=>document.getElementById(id).value='');
+    renderAll();
+  });
+
+  document.getElementById('btn-reset-ops').addEventListener('click', async ()=>{
+    if(!confirm('Esto borra todas las operaciones cargadas. ¿Seguro?')) return;
+    for(const o of ops) await deleteOp(o.id);
+    ops = [];
+    renderAll();
+  });
+  document.getElementById('btn-reset-cartera').addEventListener('click', async ()=>{
+    if(!confirm('Esto vacía la cartera de cheques. ¿Seguro?')) return;
+    for(const c of cartera) await deleteChk(c.id);
+    cartera = [];
+    renderAll();
+  });
+
+  function wireUpload(zoneId, inputId, btnId, statusId, handler){
+    const zone = document.getElementById(zoneId);
+    const input = document.getElementById(inputId);
+    const btn = document.getElementById(btnId);
+    const status = document.getElementById(statusId);
+    btn.addEventListener('click', ()=> input.click());
+    input.addEventListener('change', async (e)=>{ await handler([...e.target.files], status); input.value=''; });
+    ['dragenter','dragover'].forEach(ev=> zone.addEventListener(ev, e=>{ e.preventDefault(); zone.classList.add('drag'); }));
+    ['dragleave','drop'].forEach(ev=> zone.addEventListener(ev, e=>{ e.preventDefault(); zone.classList.remove('drag'); }));
+    zone.addEventListener('drop', async (e)=>{ const files=[...e.dataTransfer.files]; if(files.length) await handler(files, status); });
+  }
+
+  wireUpload('drop-ops','file-ops','btn-pick-ops','status-ops', async (files, status)=>{
+    status.textContent = 'Procesando…'; status.className='upload-status';
+    const msgs = [];
+    for(const f of files){ const r = await processOpsFile(f); msgs.push(r.msg); status.className='upload-status '+(r.ok?'ok':'err'); }
+    status.textContent = msgs.join(' ');
+    renderAll();
+  });
+  wireUpload('drop-cartera','file-cartera','btn-pick-cartera','status-cartera', async (files, status)=>{
+    status.textContent = 'Procesando…'; status.className='upload-status';
+    const msgs = [];
+    for(const f of files){ const r = await processCarteraFile(f); msgs.push(r.msg); status.className='upload-status '+(r.ok?'ok':'err'); }
+    status.textContent = msgs.join(' ');
+    renderAll();
+  });
+
+  (async function(){ await loadOps(); await loadCartera(); renderAll(); })();
+})();
+</script>
