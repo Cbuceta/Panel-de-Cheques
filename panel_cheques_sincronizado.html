@@ -531,7 +531,10 @@
     const statusEl = document.getElementById('sync-status');
     if(statusEl) statusEl.textContent = '⏳ Sincronizando…';
     try{
-      const summary = computeChequesSummary();
+      const payload = {
+        resumen: computeChequesSummary(),
+        datos: { ops, cartera, gastos, uploadedFiles: [...uploadedFiles] }
+      };
       const res = await fetch(`${SUPABASE_URL}/rest/v1/${SUPABASE_TABLE}?on_conflict=id`, {
         method:'POST',
         headers:{
@@ -540,17 +543,48 @@
           'Content-Type':'application/json',
           'Prefer':'resolution=merge-duplicates,return=minimal'
         },
-        body: JSON.stringify({ id: SUPABASE_ROW_ID, valor: summary, updated_at: new Date().toISOString() })
+        body: JSON.stringify({ id: SUPABASE_ROW_ID, valor: payload, updated_at: new Date().toISOString() })
       });
       if(!res.ok){
         const bodyText = await res.text().catch(()=> '');
         throw new Error('HTTP '+res.status+' — '+bodyText);
       }
-      if(statusEl) statusEl.textContent = '✓ Sincronizado con el Panel General';
+      if(statusEl) statusEl.textContent = '✓ Sincronizado con el equipo';
     }catch(e){
       console.error('Error sincronizando con Supabase:', e);
       if(statusEl) statusEl.textContent = '⚠ No se pudo sincronizar';
     }
+  }
+
+  let fullDataLoaded = false;
+  let fullDataPromise = null;
+  // Carga una sola vez, al abrir el panel, los datos completos guardados por
+  // cualquier persona del equipo (Supabase, no window.storage — así funciona
+  // igual para todos sin importar dónde se abra el archivo).
+  async function ensureFullDataLoaded(){
+    if(fullDataLoaded) return;
+    if(!fullDataPromise){
+      fullDataPromise = (async ()=>{
+        try{
+          const res = await fetch(`${SUPABASE_URL}/rest/v1/${SUPABASE_TABLE}?id=eq.${SUPABASE_ROW_ID}&select=valor`, {
+            headers:{ 'apikey': SUPABASE_KEY, 'Authorization': 'Bearer '+SUPABASE_KEY }
+          });
+          if(res.ok){
+            const rows = await res.json();
+            const v = rows && rows[0] ? rows[0].valor : null;
+            const datos = v && v.datos ? v.datos : null;
+            if(datos){
+              ops = datos.ops || [];
+              cartera = datos.cartera || [];
+              gastos = datos.gastos || [];
+              uploadedFiles = new Set(datos.uploadedFiles || []);
+            }
+          }
+        }catch(e){ console.error('Error cargando datos compartidos:', e); }
+        fullDataLoaded = true;
+      })();
+    }
+    return fullDataPromise;
   }
 
   // ---------- helpers ----------
@@ -604,15 +638,10 @@
   function uid(){ return 'x'+Date.now()+Math.random().toString(36).slice(2,7); }
   // Recuerda qué archivos ya se subieron (por nombre+tamaño) para no volver a procesar el mismo archivo si se resube.
   let uploadedFiles = new Set();
-  async function loadUploadedFiles(){
-    try{
-      const r = await window.storage.get('meta:uploaded_files', true);
-      if(r && r.value) uploadedFiles = new Set(JSON.parse(r.value));
-    }catch(e){ uploadedFiles = new Set(); }
-  }
+  async function loadUploadedFiles(){ await ensureFullDataLoaded(); }
   async function markFileUploaded(fp){
     uploadedFiles.add(fp);
-    try{ await window.storage.set('meta:uploaded_files', JSON.stringify([...uploadedFiles]), true); }catch(e){}
+    scheduleSyncSupabase();
   }
   function fileFingerprint(file){ return `${file.name}|${file.size||0}|${file.lastModified||0}`; }
   async function addOp(o){ if(!o.id) o.id = uid(); await storeOp(o); ops.push(o); }
@@ -623,37 +652,27 @@
   }
 
   // ---------- storage ----------
-  async function storeOp(op){ try{ return await window.storage.set(OP_PREFIX+op.id, JSON.stringify(op), true); }catch(e){ return null; } }
-  async function deleteOp(id){ try{ await window.storage.delete(OP_PREFIX+id, true); }catch(e){} }
-  async function storeChk(c){ try{ return await window.storage.set(CHK_PREFIX+c.id, JSON.stringify(c), true); }catch(e){ return null; } }
-  async function deleteChk(id){ try{ await window.storage.delete(CHK_PREFIX+id, true); }catch(e){} }
-  async function storeGasto(g){ try{ return await window.storage.set(GASTO_PREFIX+g.id, JSON.stringify(g), true); }catch(e){ return null; } }
-  async function deleteGasto(id){ try{ await window.storage.delete(GASTO_PREFIX+id, true); }catch(e){} }
+  async function storeOp(op){ scheduleSyncSupabase(); return true; }
+  async function deleteOp(id){ scheduleSyncSupabase(); }
+  async function storeChk(c){ scheduleSyncSupabase(); return true; }
+  async function deleteChk(id){ scheduleSyncSupabase(); }
+  async function storeGasto(g){ scheduleSyncSupabase(); return true; }
+  async function deleteGasto(id){ scheduleSyncSupabase(); }
 
   async function loadOps(){
-    let keys = [];
-    try{ const r = await window.storage.list(OP_PREFIX,true); keys=(r&&r.keys)||[]; }catch(e){}
-    if(keys.length===0){
+    await ensureFullDataLoaded();
+    if(ops.length===0){
       ops = seedOps();
-      for(const o of ops) await storeOp(o);
-    } else {
-      ops = [];
-      for(const k of keys){ try{ const r = await window.storage.get(k,true); if(r&&r.value) ops.push(JSON.parse(r.value)); }catch(e){} }
+      scheduleSyncSupabase();
     }
     ops.sort((a,b)=>(a.fecha||'').localeCompare(b.fecha||''));
   }
   async function loadCartera(){
-    let keys = [];
-    try{ const r = await window.storage.list(CHK_PREFIX,true); keys=(r&&r.keys)||[]; }catch(e){}
-    cartera = [];
-    for(const k of keys){ try{ const r = await window.storage.get(k,true); if(r&&r.value) cartera.push(JSON.parse(r.value)); }catch(e){} }
+    await ensureFullDataLoaded();
     cartera.sort((a,b)=>(a.fechaPago||'').localeCompare(b.fechaPago||''));
   }
   async function loadGastos(){
-    let keys = [];
-    try{ const r = await window.storage.list(GASTO_PREFIX,true); keys=(r&&r.keys)||[]; }catch(e){}
-    gastos = [];
-    for(const k of keys){ try{ const r = await window.storage.get(k,true); if(r&&r.value) gastos.push(JSON.parse(r.value)); }catch(e){} }
+    await ensureFullDataLoaded();
     gastos.sort((a,b)=>(a.fecha||'').localeCompare(b.fecha||''));
   }
 
@@ -1808,21 +1827,21 @@
     if(!confirm('Esto borra todas las operaciones cargadas. ¿Seguro?')) return;
     for(const o of ops) await deleteOp(o.id);
     ops = [];
-    uploadedFiles = new Set(); await window.storage.delete('meta:uploaded_files', true).catch(()=>{});
+    uploadedFiles = new Set(); scheduleSyncSupabase();
     renderAll();
   });
   document.getElementById('btn-reset-cartera').addEventListener('click', async ()=>{
     if(!confirm('Esto vacía la cartera de cheques. ¿Seguro?')) return;
     for(const c of cartera) await deleteChk(c.id);
     cartera = [];
-    uploadedFiles = new Set(); await window.storage.delete('meta:uploaded_files', true).catch(()=>{});
+    uploadedFiles = new Set(); scheduleSyncSupabase();
     renderAll();
   });
   document.getElementById('btn-reset-gastos').addEventListener('click', async ()=>{
     if(!confirm('Esto borra todos los extractos de gastos bancarios cargados. ¿Seguro?')) return;
     for(const g of gastos) await deleteGasto(g.id);
     gastos = [];
-    uploadedFiles = new Set(); await window.storage.delete('meta:uploaded_files', true).catch(()=>{});
+    uploadedFiles = new Set(); scheduleSyncSupabase();
     renderAll();
   });
 
