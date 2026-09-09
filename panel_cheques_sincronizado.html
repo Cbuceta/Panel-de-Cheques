@@ -486,7 +486,7 @@
   let gastos = [];
 
   // ═══════════════════════════════════════════════════════
-  // SUPABASE — sincronización con el Panel General
+  // SUPABASE — sincronización con el Panel General y con el equipo
   // ═══════════════════════════════════════════════════════
   const SUPABASE_URL = 'https://ozbynorwhkmevjmftpmy.supabase.co';
   const SUPABASE_KEY = 'sb_publishable_sBhFezk4bg0OPbSGG59jwA_bt1I1kpp';
@@ -733,8 +733,11 @@
     const s = String(d||'');
     let m = s.match(/(\d{4})-(\d{2})-(\d{2})/);
     if(m) return `${m[1]}-${m[2]}-${m[3]}`;
-    m = s.match(/(\d{1,2})\/(\d{1,2})\/(\d{4})/);
+    m = s.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
     if(m) return `${m[3]}-${m[2].padStart(2,'0')}-${m[1].padStart(2,'0')}`;
+    // Formato corto M/D/AA (mes/día/año) que trae la columna "Fecha" del extracto nativo de Galicia
+    m = s.match(/^(\d{1,2})\/(\d{1,2})\/(\d{2})$/);
+    if(m) return `20${m[3]}-${m[1].padStart(2,'0')}-${m[2].padStart(2,'0')}`;
     return '';
   }
   // Extracto nativo de Galicia (hoja 'Movimientos') — reconstruye la venta de cheques cheque por cheque
