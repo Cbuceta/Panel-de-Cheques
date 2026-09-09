@@ -1,0 +1,1874 @@
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+
+<style>
+  :root{
+    --bg:#0b0d12;
+    --panel:#12151c;
+    --panel-2:#171b23;
+    --line:#262b35;
+    --text:#eef0f3;
+    --text-dim:#8b93a1;
+    --gold:#f0c419;
+    --gold-ink:#1a1608;
+    --red:#ef4444;
+    --orange:#f59e0b;
+    --green:#22c55e;
+    --blue:#4d8dff;
+    --grey:#8b93a1;
+    --sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif;
+  }
+  *{box-sizing:border-box;}
+  #panel{
+    background:var(--bg);
+    color:var(--text);
+    font-family:var(--sans);
+    padding:0 0 50px;
+    border-radius:6px;
+    min-height:100%;
+  }
+  /* ---------- header ---------- */
+  .topbar{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    padding:14px 22px;
+    border-bottom:1px solid var(--line);
+    background:var(--panel);
+    border-radius:6px 6px 0 0;
+    flex-wrap:wrap;
+    gap:12px;
+  }
+  .topbar .brand{ display:flex; align-items:center; gap:12px; }
+  .brand .icon{
+    width:34px; height:34px; border-radius:8px;
+    background:var(--gold); color:var(--gold-ink);
+    display:flex; align-items:center; justify-content:center;
+    font-size:17px; font-weight:800;
+  }
+  .brand h1{ font-size:16.5px; margin:0; font-weight:700; }
+  .brand .sub{ font-size:11.5px; color:var(--text-dim); }
+  .topbar .actions{ display:flex; gap:8px; align-items:center; }
+  .ghost-btn{
+    background:var(--panel-2); border:1px solid var(--line); color:var(--text);
+    padding:8px 13px; border-radius:6px; font-size:12.5px; cursor:pointer;
+  }
+  .ghost-btn:hover{ border-color:var(--text-dim); }
+  .shared-badge{ font-size:11px; color:var(--green); background:var(--panel-2); border:1px solid var(--line); padding:6px 11px; border-radius:20px; }
+
+  .content{ padding:22px 22px 0; }
+
+  /* ---------- hero ---------- */
+  .hero{
+    background:var(--gold);
+    color:var(--gold-ink);
+    border-radius:8px;
+    padding:20px 24px;
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    flex-wrap:wrap;
+    gap:18px;
+    margin-bottom:22px;
+  }
+  .hero .label{ font-size:12px; letter-spacing:.5px; opacity:.75; font-weight:700; }
+  .hero .num{ font-size:38px; font-weight:800; line-height:1.1; margin-top:2px; }
+  .hero .sub{ font-size:12.5px; opacity:.8; margin-top:4px; }
+  .hero .stats{ display:flex; gap:26px; flex-wrap:wrap; }
+  .hero .stats .st{ text-align:center; }
+  .hero .stats .st .n{ font-size:24px; font-weight:800; }
+  .hero .stats .st .l{ font-size:10.5px; text-transform:uppercase; letter-spacing:.4px; opacity:.75; }
+
+  /* ---------- concept cards (nivel 1 del desglose) ---------- */
+  .concept-row{ display:flex; gap:16px; flex-wrap:wrap; margin-bottom:22px; }
+  .concept-card{
+    flex:1 1 320px;
+    min-width:280px;
+    background:var(--panel);
+    border:1.5px solid var(--line);
+    border-left:5px solid var(--concept-color, var(--gold));
+    border-radius:8px;
+    padding:18px 22px;
+    cursor:pointer;
+    transition:background .12s, transform .08s;
+  }
+  .concept-card:hover{ background:var(--panel-2); }
+  .concept-card.active{
+    background:var(--panel-2);
+    box-shadow:0 0 0 1.5px var(--concept-color, var(--gold)) inset;
+  }
+  .concept-card .clabel{ font-size:12px; letter-spacing:.5px; font-weight:700; color:var(--concept-color, var(--gold)); }
+  .concept-card .cnum{ font-size:30px; font-weight:800; margin-top:4px; }
+  .concept-card .csub{ font-size:12px; color:var(--text-dim); margin-top:4px; }
+  .concept-card .chint{ font-size:10.5px; color:var(--concept-color, var(--gold)); margin-top:10px; }
+
+  /* ---------- bank cards (interactive filter buttons) ---------- */
+  .bank-cards{ display:flex; gap:12px; flex-wrap:wrap; margin-bottom:22px; }
+  .bank-card{
+    background:var(--panel);
+    border:1px solid var(--line);
+    border-bottom:3px solid var(--card-color, var(--grey));
+    border-radius:6px;
+    padding:14px 16px;
+    flex:1 1 160px;
+    min-width:150px;
+    cursor:pointer;
+    transition:transform .1s, background .12s;
+  }
+  .bank-card:hover{ background:var(--panel-2); }
+  .bank-card.active{
+    background:var(--panel-2);
+    box-shadow:0 0 0 1px var(--card-color, var(--gold)) inset;
+  }
+  .bank-card .label{ font-size:11px; color:var(--text-dim); margin-bottom:6px; }
+  .bank-card .num{ font-size:20px; font-weight:800; color:var(--card-color, var(--text)); }
+  .bank-card .sub{ font-size:10.5px; color:var(--text-dim); margin-top:5px; }
+  .bank-card .hint{ font-size:9.5px; color:var(--card-color, var(--gold)); margin-top:6px; }
+  .bank-card.empty{ opacity:.45; }
+  .bank-card.empty .num{ color:var(--text-dim); }
+  .bank-card.empty:hover{ opacity:.7; }
+
+  /* ---------- filters ---------- */
+  .filters-row{
+    display:flex; gap:10px; flex-wrap:wrap; align-items:center; margin-bottom:20px;
+  }
+  .filters-row input[type=text], .filters-row select{
+    background:var(--panel); border:1px solid var(--line); color:var(--text);
+    padding:9px 13px; border-radius:6px; font-size:12.5px;
+  }
+  .filters-row input[type=text]{ min-width:200px; }
+  .filters-row input:focus, .filters-row select:focus{ outline:none; border-color:var(--gold); }
+  .clear-filters{ font-size:12px; color:var(--text-dim); background:none; border:none; text-decoration:underline; cursor:pointer; padding:4px; }
+
+  /* ---------- tabs ---------- */
+  .tabs{ display:flex; gap:4px; margin-bottom:20px; border-bottom:1px solid var(--line); }
+  .tab-btn{
+    background:none; border:none; color:var(--text-dim); padding:10px 4px; margin-right:24px;
+    font-size:14px; font-family:var(--sans); cursor:pointer; border-bottom:2px solid transparent;
+  }
+  .tab-btn.active{ color:var(--text); border-bottom-color:var(--gold); }
+  .tab-panel{ display:none; }
+  .tab-panel.active{ display:block; }
+
+  .section-label{ font-size:11.5px; color:var(--text-dim); margin:0 0 10px; letter-spacing:.3px; text-transform:uppercase; }
+
+  /* ---------- upload zone ---------- */
+  .upload-zone{
+    background:var(--panel); border:1.5px dashed var(--line); border-radius:6px;
+    padding:20px; text-align:center; margin-bottom:22px; transition:border-color .15s;
+  }
+  .upload-zone.drag{ border-color:var(--gold); }
+  .upload-zone p{ margin:0 0 10px; color:var(--text-dim); font-size:13px; }
+  .upload-zone input[type=file]{ display:none; }
+  .upload-status{ font-size:12.5px; color:var(--text-dim); margin-top:10px; min-height:16px; }
+  .upload-status.ok{ color:var(--green); }
+  .upload-status.err{ color:var(--red); }
+
+  /* ---------- summary cards (secondary, inside tabs) ---------- */
+  .summary-row{ display:flex; gap:14px; flex-wrap:wrap; margin-bottom:24px; }
+  .card{ background:var(--panel); border:1px solid var(--line); border-radius:6px; padding:15px 17px; flex:1 1 170px; min-width:160px; }
+  .card .bank{ font-size:11.5px; color:var(--text-dim); margin-bottom:8px; }
+  .card .num{ font-size:20px; font-weight:800; }
+  .card.total{ background:var(--panel-2); border-color:var(--gold); }
+  .card.total .num{ color:var(--gold); }
+  .card.loss .num{ color:var(--red); }
+  .card.net .num{ color:var(--green); }
+
+  /* ---------- manual form ---------- */
+  details.form-box{ background:var(--panel); border:1px solid var(--line); border-radius:6px; padding:16px 20px; margin-bottom:24px; }
+  details.form-box summary{ cursor:pointer; font-size:13px; color:var(--text-dim); list-style:none; }
+  details.form-box summary::-webkit-details-marker{ display:none; }
+  details.form-box summary:before{ content:'+ '; color:var(--gold); }
+  details.form-box[open] summary:before{ content:'– '; }
+  .form-grid{ display:grid; grid-template-columns:repeat(4, 1fr); gap:12px; margin-top:16px; }
+  @media(max-width:700px){ .form-grid{grid-template-columns:repeat(2,1fr);} }
+  .field{ display:flex; flex-direction:column; gap:5px; }
+  .field label{ font-size:11px; color:var(--text-dim); }
+  .field input, .field select{ background:var(--bg); border:1px solid var(--line); color:var(--text); padding:8px 9px; border-radius:4px; font-size:13.5px; }
+  .field input:focus, .field select:focus{ outline:none; border-color:var(--gold); }
+  .field.wide{ grid-column: span 2; }
+  .form-actions{ display:flex; justify-content:flex-end; gap:10px; margin-top:16px; }
+
+  button.primary{ background:var(--gold); border-color:var(--gold); color:var(--gold-ink); font-weight:700; }
+  button.primary:hover{ filter:brightness(1.06); }
+  .ghost-btn, button.primary{ font-family:var(--sans); font-size:13px; padding:9px 17px; border-radius:6px; border:1px solid var(--line); cursor:pointer; }
+  button.link{ background:none; border:none; color:var(--text-dim); padding:2px 6px; font-size:12px; text-decoration:underline; cursor:pointer; }
+  button.link:hover{ color:var(--red); }
+  button.upload-btn{ background:var(--gold); border-color:var(--gold); color:var(--gold-ink); font-weight:700; font-size:13px; padding:9px 17px; border-radius:6px; cursor:pointer; }
+
+  /* ---------- table ---------- */
+  table{ width:100%; border-collapse:collapse; font-size:12.8px; color:var(--text) !important; }
+  thead th{ text-align:left; color:var(--text-dim) !important; font-weight:600; font-size:10.5px; letter-spacing:.3px; text-transform:uppercase; padding:9px 10px; border-bottom:1px solid var(--line); }
+  tbody td{ padding:10px; border-bottom:1px solid var(--line); color:var(--text) !important; }
+  tbody tr:hover{ background:var(--panel); }
+  td.num, th.num{ text-align:right; font-variant-numeric:tabular-nums; }
+  table, table *{ color:var(--text); }
+  thead th{ color:var(--text-dim) !important; }
+  .bank-tag{ color:inherit; }
+  .bank-tag{ font-size:10.5px; padding:3px 9px; border-radius:20px; font-weight:600; white-space:nowrap; }
+  .note{ font-size:10.5px; color:var(--text-dim); }
+  .empty-state{ text-align:center; color:var(--text-dim); padding:36px 0; font-size:13px; }
+  .loading{ color:var(--text-dim); font-size:13px; padding:16px 0; }
+
+  /* ---------- indicadores bars ---------- */
+  .indic-bank-row{ margin-bottom:18px; }
+  .indic-bank-row .head{ display:flex; justify-content:space-between; font-size:12.5px; margin-bottom:6px; }
+  .indic-bank-row .head .name{ font-weight:700; }
+  .bar-track{ display:flex; height:22px; border-radius:4px; overflow:hidden; background:var(--panel-2); border:1px solid var(--line); }
+  .bar-seg{ height:100%; }
+  .bar-legend{ display:flex; gap:16px; font-size:11px; color:var(--text-dim); margin-top:6px; }
+  .bar-legend .dot{ width:8px; height:8px; border-radius:50%; display:inline-block; margin-right:5px; }
+
+  /* ---------- ayuda / instructivo ---------- */
+  .help-content{ max-width:900px; font-size:13.5px; line-height:1.65; color:var(--text); }
+  .help-content h2{ font-size:15px; color:var(--gold); margin:26px 0 10px; font-weight:700; }
+  .help-content h2:first-child{ margin-top:0; }
+  .help-content p{ margin:0 0 12px; color:var(--text); }
+  .help-content ul, .help-content ol{ margin:0 0 12px; padding-left:20px; }
+  .help-content li{ margin-bottom:6px; }
+  .help-content strong{ color:var(--gold); font-weight:600; }
+  .help-content code{ background:var(--panel-2); padding:1px 6px; border-radius:3px; font-size:12px; border:1px solid var(--line); }
+  .help-table{ width:100%; border-collapse:collapse; margin:10px 0 20px; font-size:12.5px; }
+  .help-table th{ text-align:left; background:var(--panel-2); color:var(--text-dim); font-weight:600; padding:9px 10px; border:1px solid var(--line); font-size:11px; text-transform:uppercase; letter-spacing:.3px; }
+  .help-table td{ padding:10px; border:1px solid var(--line); vertical-align:top; }
+  .help-table td strong{ color:var(--text); }
+  .help-pill{ display:inline-block; background:var(--panel-2); border:1px solid var(--gold); color:var(--gold); border-radius:20px; padding:2px 9px; font-size:11px; margin-bottom:4px; }
+</style>
+
+<div id="panel">
+  <div class="topbar">
+    <div class="brand">
+      <div class="icon">$</div>
+      <div>
+        <h1>Panel de Intereses <span style="color:var(--text-dim); font-weight:400;">· SPL / Spotsline</span></h1>
+        <div class="sub" id="topbar-sub">Cargando…</div>
+      </div>
+    </div>
+    <div class="actions">
+      <span class="shared-badge" title="Los datos se guardan compartidos: cualquiera con este link ve y modifica lo mismo">🔗 Compartido con tu equipo</span>
+      <button class="ghost-btn" id="btn-refresh">↻ Actualizar</button>
+    </div>
+  </div>
+
+  <div class="content">
+
+    <div class="upload-zone" id="drop-global">
+      <p>📥 Subí cualquier archivo acá — comprobantes de venta de cheques (PDF/Excel), extractos de cuenta o cartera de cheques. Se detecta el banco y el destino solo (Operaciones / Gastos bancarios / Cartera). Podés subir todos juntos.</p>
+      <button class="upload-btn" id="btn-pick-global">Elegir archivos</button>
+      <input type="file" id="file-global" multiple accept=".pdf,.xls,.xlsx">
+      <div class="upload-status" id="status-global"></div>
+    </div>
+
+    <div class="concept-row" id="concept-row">
+      <div class="concept-card" id="concept-cheques" style="--concept-color:var(--gold)">
+        <div class="clabel">VENTA DE CHEQUES</div>
+        <div class="cnum" id="concept-cheques-num">$ 0,00</div>
+        <div class="csub" id="concept-cheques-sub">costo financiero (pérdida)</div>
+        <div class="chint">tocá para entrar y desglosar</div>
+      </div>
+      <div class="concept-card" id="concept-gastos" style="--concept-color:var(--blue)">
+        <div class="clabel">GASTOS BANCARIOS</div>
+        <div class="cnum" id="concept-gastos-num">$ 0,00</div>
+        <div class="csub" id="concept-gastos-sub">comisiones, sellos, IVA, IIBB, descubierto</div>
+        <div class="chint">tocá para entrar y desglosar</div>
+      </div>
+    </div>
+
+    <div class="section-label" id="drill-label">BANCOS — TOCÁ UNO PARA FILTRAR TODO EL PANEL</div>
+    <div class="bank-cards" id="bank-cards"><div class="loading">Cargando…</div></div>
+
+    <div class="filters-row">
+      <input type="text" id="search-box" placeholder="Buscar por N° operación o nota…">
+      <select id="filter-mes"><option value="">Todos los meses</option></select>
+      <select id="filter-empresa"><option value="">Ambas empresas</option><option>Spotsline</option><option>SPL Distribuidora</option></select>
+      <button class="clear-filters" id="btn-clear-filters">Limpiar filtros</button>
+    </div>
+
+    <div class="tabs">
+      <button class="tab-btn active" data-tab="ops">Operaciones de descuento</button>
+      <button class="tab-btn" data-tab="cartera">Cheques en cartera</button>
+      <button class="tab-btn" data-tab="gastos">Gastos bancarios</button>
+      <button class="tab-btn" data-tab="indic">Indicadores</button>
+      <button class="tab-btn" data-tab="ayuda">Ayuda</button>
+    </div>
+
+    <!-- ===================== TAB: OPERACIONES ===================== -->
+    <div class="tab-panel active" id="tab-ops">
+      <p class="note" style="display:block;margin-bottom:16px;">💡 Subí los archivos desde la zona de arriba — acá abajo solo se muestra lo ya cargado.</p>
+
+      <div class="section-label">RESUMEN</div>
+      <div class="summary-row" id="summary-ops"><div class="loading">Cargando…</div></div>
+
+      <details class="form-box">
+        <summary>Cargar operación a mano</summary>
+        <div class="form-grid">
+          <div class="field"><label>Banco</label>
+            <select id="f-banco">
+              <option>Galicia</option><option>Patagonia</option><option>Credicoop</option>
+              <option>Provincia</option><option>Comafi</option><option>ICBC</option><option>Macro</option><option>Nación</option><option>Otro</option>
+            </select>
+          </div>
+          <div class="field"><label>Empresa</label>
+            <select id="f-empresa"><option>Spotsline</option><option>SPL Distribuidora</option></select>
+          </div>
+          <div class="field"><label>Fecha</label><input type="date" id="f-fecha"></div>
+          <div class="field"><label>N° operación</label><input type="text" id="f-nro" placeholder="opcional"></div>
+          <div class="field"><label>Importe de cheques</label><input type="number" id="f-importe" step="0.01" placeholder="0.00"></div>
+          <div class="field"><label>Interés</label><input type="number" id="f-interes" step="0.01" placeholder="0.00"></div>
+          <div class="field"><label>IVA s/interés</label><input type="number" id="f-iva" step="0.01" placeholder="0.00"></div>
+          <div class="field"><label>Percepción IVA/IIBB</label><input type="number" id="f-percep" step="0.01" placeholder="0.00"></div>
+          <div class="field"><label>Sellos</label><input type="number" id="f-sellos" step="0.01" placeholder="0.00"></div>
+          <div class="field"><label>Comisión</label><input type="number" id="f-comision" step="0.01" placeholder="0.00"></div>
+          <div class="field wide"><label>Nota</label><input type="text" id="f-nota" placeholder="opcional"></div>
+        </div>
+        <div class="form-actions">
+          <button class="primary" id="btn-add">Agregar operación</button>
+        </div>
+      </details>
+
+      <div class="section-label">OPERACIONES CARGADAS</div>
+      <div id="table-ops"><div class="loading">Cargando…</div></div>
+      <div style="margin-top:14px;"><button class="ghost-btn" id="btn-reset-ops">Borrar todas las operaciones</button></div>
+    </div>
+
+    <!-- ===================== TAB: CARTERA ===================== -->
+    <div class="tab-panel" id="tab-cartera">
+      <p class="note" style="display:block;margin-bottom:16px;">💡 Subí los archivos desde la zona de arriba — acá abajo solo se muestra lo ya cargado.</p>
+
+      <div class="section-label">RESUMEN</div>
+      <div class="summary-row" id="summary-cartera"><div class="loading">Cargando…</div></div>
+
+      <div class="section-label">CHEQUES EN CARTERA</div>
+      <div id="table-cartera"><div class="loading">Cargando…</div></div>
+      <div style="margin-top:14px;"><button class="ghost-btn" id="btn-reset-cartera">Vaciar cartera</button></div>
+    </div>
+
+    <!-- ===================== TAB: GASTOS BANCARIOS ===================== -->
+    <div class="tab-panel" id="tab-gastos">
+      <p class="note" style="display:block;margin-bottom:16px;">💡 Subí los archivos desde la zona de arriba — acá abajo solo se muestra lo ya cargado.</p>
+
+      <div class="section-label">RESUMEN POR CATEGORÍA</div>
+      <div class="summary-row" id="summary-gastos"><div class="loading">Cargando…</div></div>
+
+      <div class="section-label">RESUMEN POR BANCO</div>
+      <div class="summary-row" id="summary-gastos-banco"><div class="loading">Cargando…</div></div>
+
+      <div class="section-label">MOVIMIENTOS (solo los que cuentan como costo)</div>
+      <div id="table-gastos"><div class="loading">Cargando…</div></div>
+      <div style="margin-top:14px;"><button class="ghost-btn" id="btn-reset-gastos">Borrar extractos cargados</button></div>
+    </div>
+
+    <!-- ===================== TAB: INDICADORES ===================== -->
+    <div class="tab-panel" id="tab-indic">
+      <div class="section-label">RESUMEN GENERAL</div>
+      <div class="summary-row" id="summary-indic"><div class="loading">Cargando…</div></div>
+
+      <div class="section-label">CARTERA vs. VENDIDO — QUÉ TE QUEDA DISPONIBLE</div>
+      <div class="summary-row" id="summary-disponible"><div class="loading">Cargando…</div></div>
+
+      <div class="section-label">GASTOS BANCARIOS — COMISIONES, SELLOS, IVA, IIBB, DESCUBIERTO</div>
+      <div class="summary-row" id="summary-indic-gastos"><div class="loading">Cargando…</div></div>
+
+      <div class="section-label">CÓMO SE REPARTE LO VENDIDO, POR BANCO</div>
+      <div class="bar-legend" style="margin-bottom:14px;">
+        <span><span class="dot" style="background:var(--green)"></span>Neto (destinado a otros pagos)</span>
+        <span><span class="dot" style="background:var(--red)"></span>Costo financiero (pérdida)</span>
+      </div>
+      <div id="indic-bars"><div class="loading">Cargando…</div></div>
+    </div>
+
+    <!-- ===================== TAB: AYUDA ===================== -->
+    <div class="tab-panel" id="tab-ayuda">
+      <div class="help-content">
+
+        <h2>Cómo se sube todo</h2>
+        <p>Hay <strong>una sola zona de carga</strong>, arriba de todo el panel. Le arrastrás o elegís los archivos (podés subir varios juntos, de cualquier banco, de cualquier mes) y el panel:</p>
+        <ol>
+          <li>Detecta el banco solo (por el encabezado o la estructura del archivo — nunca hace falta indicarlo a mano).</li>
+          <li>Detecta la empresa solo — <strong>Spotsline SRL</strong> o <strong>SPL Distribuidora SRL</strong> — mirando si el nombre del archivo contiene "SPL". Si no lo dice, asume Spotsline.</li>
+          <li>Manda cada archivo a donde corresponde: <strong>Operaciones de descuento</strong> (venta de cheques), <strong>Gastos bancarios</strong> (comisiones, sellos, IVA, IIBB, descubierto) o <strong>Cheques en cartera</strong>.</li>
+          <li>Algunos archivos alimentan <strong>dos pestañas a la vez</strong> con una sola subida (ver tabla abajo).</li>
+        </ol>
+        <p>No hace falta elegir la pestaña antes de subir — eso es justamente lo que evita.</p>
+
+        <h2>Regla general de formato</h2>
+        <ul>
+          <li><strong>Siempre Excel</strong> (.xls o .xlsx) — es lo único que trae el nivel de detalle necesario.</li>
+          <li><strong>PDF solo se acepta como excepción</strong>, para los comprobantes puntuales de descuento de Galicia (viejo), Patagonia y Provincia — pero incluso ahí, si tenés el Excel del extracto, es mejor: trae más detalle y evita subir un PDF por cada operación.</li>
+        </ul>
+
+        <h2>Qué archivo pide cada banco</h2>
+        <table class="help-table">
+          <thead><tr><th>Banco</th><th>Para Venta de cheques</th><th>Para Gastos bancarios</th><th>Ojo con esto</th></tr></thead>
+          <tbody>
+            <tr>
+              <td><strong>Galicia</strong></td>
+              <td>Extracto nativo del home banking, hoja <code>Movimientos</code> (Fecha / Descripción / Origen / Débitos / Créditos / Concepto...). El mismo archivo sirve para las dos pestañas.</td>
+              <td>El mismo extracto nativo. Si solo tenés el Excel resumido tipo agregador (hoja <code>principal</code>), también sirve, pero solo para gastos.</td>
+              <td>El Excel resumido del agregador <strong>no trae el desglose por cheque</strong> — con ese solo entra a Gastos bancarios. Para la venta completa hace falta el extracto nativo del banco.</td>
+            </tr>
+            <tr>
+              <td><strong>Patagonia</strong></td>
+              <td>Tres fuentes posibles, cualquiera sirve:<br>
+                1) PDF "ECHEQs Descuento" (comprobante puntual).<br>
+                2) Excel <code>Movimientos</code> (extracto nuevo unificado) si trae "DESCUENTO DE ECHEQ" / "INTS. S/DESC. ECHEQ".<br>
+                3) PDF "resumen" general de cuenta, si trae esas mismas líneas.</td>
+              <td>El mismo extracto <code>Movimientos</code>, el resumen PDF, o el Excel viejo del agregador (hoja <code>principal</code>) si es lo único que tenés.</td>
+              <td><strong>No subas el comprobante puntual y el resumen/extracto del mismo mes juntos</strong> — ambos traen la venta de cheques y se duplicaría. El Excel del agregador (hoja <code>principal</code>) no tiene código de descuento de cheques, así que ese solo entra a Gastos bancarios. Si en el mes no hubo descuentos, el extracto no aporta nada a Operaciones — no es un error.</td>
+            </tr>
+            <tr>
+              <td><strong>Provincia</strong></td>
+              <td>"Detalle de Movimientos" (hoja <code>report</code>) o el extracto unificado (hoja <code>Movimientos</code>) — traen "VALORES NEGOCIADOS" + "COMISIÓN E INTERESES DESCUENTO DOCUMENTO".</td>
+              <td>El mismo archivo.</td>
+              <td>Provincia <strong>no separa</strong> interés de comisión — todo entra junto como un solo "interés".</td>
+            </tr>
+            <tr>
+              <td><strong>Credicoop</strong></td>
+              <td>Archivo aparte: "Consulta de Débitos y Créditos" / "VENTA DE CHEQUES..." (hoja <code>diferidos_debito_credito</code>).</td>
+              <td>El extracto general de cuenta (hoja <code>saldos_y_movimientos</code> o <code>Movimientos</code>).</td>
+              <td><strong>El extracto general de Credicoop NO trae la venta de cheques.</strong> Hay que exportar y subir el reporte de descuento de documentos por separado.</td>
+            </tr>
+            <tr>
+              <td><strong>Comafi / ICBC / Macro / Nación</strong></td>
+              <td>No aplica.</td>
+              <td>El extracto de cuenta (hoja <code>principal</code> o <code>Movimientos</code>).</td>
+              <td>Solo alimentan Gastos bancarios.</td>
+            </tr>
+            <tr>
+              <td><strong>Cheques en cartera</strong></td>
+              <td colspan="2">Excel con columnas "Cliente/Proveedor", "Fecha de Pago", "Importe", "Diario Actual", etc.</td>
+              <td>Distinto flujo — no es un banco, es tu propio listado de cheques recibidos.</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <h2>Los dos "conceptos" de arriba</h2>
+        <p><span class="help-pill">Venta de cheques</span> todo lo que sale de descontar cheques — importe vendido, interés, IVA, sellos, IIBB, comisión.</p>
+        <p><span class="help-pill" style="border-color:var(--blue); color:var(--blue);">Gastos bancarios</span> todo lo demás que cobra el banco por tener la cuenta — comisiones, sellos, IVA, IIBB, impuesto Ley 25.413, interés por descubierto.</p>
+        <p>Tocás cualquiera de las dos y te lleva a la pestaña correspondiente, con las tarjetas de banco ya armadas para seguir desglosando (por banco, y en Gastos bancarios también por categoría).</p>
+
+        <h2>Filtros</h2>
+        <ul>
+          <li><strong>Banco:</strong> tocando cualquier tarjeta de banco (se saca tocándola de nuevo).</li>
+          <li><strong>Mes:</strong> se arma solo con los meses que tengan datos cargados, en cualquiera de las tres pestañas de datos.</li>
+          <li><strong>Empresa:</strong> Spotsline / SPL Distribuidora / ambas.</li>
+          <li><strong>Buscar:</strong> por N° de operación o nota, dentro de Operaciones.</li>
+        </ul>
+
+        <h2>Cosas para tener en cuenta</h2>
+        <ul>
+          <li>El panel <strong>guarda todo compartido</strong> — cualquiera que abra este mismo link ve y puede modificar los mismos datos (no es una copia personal). Solo funciona así si lo estás viendo adentro de Claude.ai — si descargás el HTML y lo abrís suelto desde Descargas, no se conecta al dato compartido.</li>
+          <li>Como es compartido, si dos personas suben el mismo archivo casi al mismo tiempo, puede que ambas cargas entren igual — el control de "archivo repetido" funciona pero no es instantáneo entre usuarios.</li>
+          <li>Si subís el mismo archivo dos veces, se duplica en Operaciones y Gastos bancarios (Cartera sí filtra duplicados, por número de cheque + importe + fecha).</li>
+          <li>Si un banco cambia el formato de su exportación, es probable que el archivo nuevo no entre a la primera. Avisá y se ajusta el detector contra el archivo real.</li>
+          <li>La "tasa promedio" que se muestra es la tasa de costo efectivo (interés ÷ importe vendido), no la tasa nominal anual que declara cada banco por plazo.</li>
+        </ul>
+
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+(function(){
+  if(typeof pdfjsLib !== 'undefined'){
+    pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.worker.min.js';
+  }
+
+  const OP_PREFIX = 'op:';
+  const CHK_PREFIX = 'chk:';
+  const GASTO_PREFIX = 'gasto:';
+  const bankColor = { Galicia:'#ef4444', Patagonia:'#22c55e', Credicoop:'#f0c419', Provincia:'#4d8dff', Comafi:'#f59e0b', ICBC:'#a78bfa', Macro:'#fb923c', 'Nación':'#2dd4bf', Otro:'#8b93a1', 'Sin banco':'#8b93a1' };
+  const ALL_BANKS = ['Galicia','Patagonia','Provincia','Credicoop','Comafi','ICBC','Macro','Nación'];
+
+  let ops = [];
+  let cartera = [];
+  let filters = { bank:null, month:'', search:'', empresa:'', concepto:null };
+  let gastos = [];
+
+  // ---------- helpers ----------
+  function parseAR(s){
+    if(s===undefined||s===null) return 0;
+    if(typeof s === 'number') return s;
+    s = String(s).replace(/\$/g,'').trim();
+    if(s==='') return 0;
+    const hasComma = s.includes(',');
+    const hasDot = s.includes('.');
+    if(hasComma && hasDot){
+      // el separador que aparece más a la derecha es el decimal
+      if(s.lastIndexOf(',') > s.lastIndexOf('.')){
+        s = s.replace(/\./g,'').replace(/,/g,'.'); // formato AR: 1.234.567,89
+      } else {
+        s = s.replace(/,/g,''); // formato US: 1,234,567.89
+      }
+    } else if(hasComma){
+      const m = s.match(/,(\d+)$/);
+      s = (m && m[1].length===2) ? s.replace(/,/g,'.') : s.replace(/,/g,'');
+    } else if(hasDot){
+      const dotCount = (s.match(/\./g)||[]).length;
+      if(dotCount > 1){ s = s.replace(/\./g,''); }
+      else {
+        const m = s.match(/\.(\d+)$/);
+        if(m && m[1].length===3) s = s.replace(/\./g,'');
+      }
+    }
+    const n = parseFloat(s);
+    return isNaN(n)?0:n;
+  }
+  function fmt(n){ n = Number(n)||0; return n.toLocaleString('es-AR', {minimumFractionDigits:2, maximumFractionDigits:2}); }
+  function money(n){ return '$ ' + fmt(n); }
+  function toISO(dmy){
+    if(!dmy) return '';
+    const m = dmy.match(/(\d{2})\/(\d{2})\/(\d{4})/);
+    if(m) return `${m[3]}-${m[2]}-${m[1]}`;
+    if(/^\d{4}-\d{2}-\d{2}$/.test(dmy)) return dmy;
+    return '';
+  }
+  function monthKey(iso){ if(!iso) return 'sin-fecha'; return iso.slice(0,7); }
+  function monthLabel(key){
+    if(key==='sin-fecha') return 'Sin fecha';
+    const [y,m] = key.split('-');
+    const names = ['ene','feb','mar','abr','may','jun','jul','ago','sep','oct','nov','dic'];
+    return names[parseInt(m,10)-1] + ' ' + y;
+  }
+  function costoTotal(op){
+    return (Number(op.interes)||0)+(Number(op.iva)||0)+(Number(op.percep)||0)+(Number(op.sellos)||0)+(Number(op.comision)||0);
+  }
+  function uid(){ return 'x'+Date.now()+Math.random().toString(36).slice(2,7); }
+  // Recuerda qué archivos ya se subieron (por nombre+tamaño) para no volver a procesar el mismo archivo si se resube.
+  let uploadedFiles = new Set();
+  async function loadUploadedFiles(){
+    try{
+      const r = await window.storage.get('meta:uploaded_files', true);
+      if(r && r.value) uploadedFiles = new Set(JSON.parse(r.value));
+    }catch(e){ uploadedFiles = new Set(); }
+  }
+  async function markFileUploaded(fp){
+    uploadedFiles.add(fp);
+    try{ await window.storage.set('meta:uploaded_files', JSON.stringify([...uploadedFiles]), true); }catch(e){}
+  }
+  function fileFingerprint(file){ return `${file.name}|${file.size||0}|${file.lastModified||0}`; }
+  async function addOp(o){ if(!o.id) o.id = uid(); await storeOp(o); ops.push(o); }
+  async function addGasto(g){ if(!g.id) g.id = uid(); await storeGasto(g); gastos.push(g); }
+  function tag(banco){
+    const c = bankColor[banco]||'#8b93a1';
+    return `<span class="bank-tag" style="background:${c}22;color:${c}">${banco}</span>`;
+  }
+
+  // ---------- storage ----------
+  async function storeOp(op){ try{ return await window.storage.set(OP_PREFIX+op.id, JSON.stringify(op), true); }catch(e){ return null; } }
+  async function deleteOp(id){ try{ await window.storage.delete(OP_PREFIX+id, true); }catch(e){} }
+  async function storeChk(c){ try{ return await window.storage.set(CHK_PREFIX+c.id, JSON.stringify(c), true); }catch(e){ return null; } }
+  async function deleteChk(id){ try{ await window.storage.delete(CHK_PREFIX+id, true); }catch(e){} }
+  async function storeGasto(g){ try{ return await window.storage.set(GASTO_PREFIX+g.id, JSON.stringify(g), true); }catch(e){ return null; } }
+  async function deleteGasto(id){ try{ await window.storage.delete(GASTO_PREFIX+id, true); }catch(e){} }
+
+  async function loadOps(){
+    let keys = [];
+    try{ const r = await window.storage.list(OP_PREFIX,true); keys=(r&&r.keys)||[]; }catch(e){}
+    if(keys.length===0){
+      ops = seedOps();
+      for(const o of ops) await storeOp(o);
+    } else {
+      ops = [];
+      for(const k of keys){ try{ const r = await window.storage.get(k,true); if(r&&r.value) ops.push(JSON.parse(r.value)); }catch(e){} }
+    }
+    ops.sort((a,b)=>(a.fecha||'').localeCompare(b.fecha||''));
+  }
+  async function loadCartera(){
+    let keys = [];
+    try{ const r = await window.storage.list(CHK_PREFIX,true); keys=(r&&r.keys)||[]; }catch(e){}
+    cartera = [];
+    for(const k of keys){ try{ const r = await window.storage.get(k,true); if(r&&r.value) cartera.push(JSON.parse(r.value)); }catch(e){} }
+    cartera.sort((a,b)=>(a.fechaPago||'').localeCompare(b.fechaPago||''));
+  }
+  async function loadGastos(){
+    let keys = [];
+    try{ const r = await window.storage.list(GASTO_PREFIX,true); keys=(r&&r.keys)||[]; }catch(e){}
+    gastos = [];
+    for(const k of keys){ try{ const r = await window.storage.get(k,true); if(r&&r.value) gastos.push(JSON.parse(r.value)); }catch(e){} }
+    gastos.sort((a,b)=>(a.fecha||'').localeCompare(b.fecha||''));
+  }
+
+  function seedOps(){
+    const rows = [
+      ['Galicia','2026-08-21','290991111', 31390217.81, 2951643.52, 309922.57, 23613.15, 106296.74, 0],
+      ['Galicia','2026-08-21','290985615', 260160.04, 6280.90, 659.49, 0, 213.83, 0],
+      ['Galicia','2026-08-24','291168037', 10901284.05, 1031495.20, 108307.00, 8251.97, 37581.42, 0],
+      ['Galicia','2026-08-25','291289773', 5023161.32, 162018.53, 17011.96, 1254.40, 5713.53, 0],
+      ['Galicia','2026-08-25','291276986', 1660304.32, 159475.29, 16744.91, 1275.80, 5809.46, 0],
+      ['Galicia','2026-08-25','291270539', 1577807.10, 63428.44, 6659.99, 503.50, 2243.67, 0],
+      ['Galicia','2026-08-26','291373227', 5920071.12, 288910.06, 30335.55, 2311.28, 10216.16, 0],
+      ['Galicia','2026-08-28','291671228', 872425.84, 33186.92, 3484.62, 265.49, 1161.64, 0],
+      ['Galicia','2026-08-28','291647847', 1284135.03, 38420.15, 4034.12, 307.36, 1336.64, 0],
+      ['Galicia','2026-08-28','291631331', 8963967.40, 481165.49, 50522.38, 3849.33, 17042.55, 0],
+      ['Galicia','2026-08-28','291626552', 7535013.28, 557265.64, 58512.88, 4458.13, 19955.55, 0],
+      ['Galicia','2026-08-28','291618624', 7122278.76, 704150.28, 73935.76, 5633.22, 25646.87, 0],
+      ['Patagonia','2026-08-05','3131731', 13210920.41, 602971.60, 63312.00, 9044.60+4760.20, 25667.14, 47745.95+5013.32+695.54],
+      ['Patagonia','2026-08-10','3137763', 7801164.04, 159380.90, 16735.00, 2358.45+1211.64, 7294.61, 19661.22+2064.43+294.92],
+      ['Patagonia','2026-08-13','3142699', 5270854.53, 74276.60, 7799.05, 1107.34+590.58, 3770.53, 41883.28+4397.75+616.87],
+      ['Credicoop','2026-08-26','333635450', 311084.54, 282.86, 194.10, 14.79, 0, 0],
+      ['Credicoop','2026-08-28','333636828', 1468594.13, 28527.80, 2995.42+427.92, 228.22, 0, 1565.71],
+      ['Credicoop','2026-08-31','333637128', 3121982.63, 2822.91, 296.41, 22.58, 0, 0]
+    ];
+    return rows.map((r,i)=>({ id:'seed'+i, banco:r[0], fecha:r[1], nro:r[2], importe:r[3],
+      interes:r[4], iva:r[5], percep:r[6], sellos:r[7], comision:r[8], nota:'', empresa:'Spotsline' }));
+  }
+
+  // ---------- PDF / Excel parsing ----------
+  async function fileToText(file){
+    const buf = await file.arrayBuffer();
+    const pdf = await pdfjsLib.getDocument({data:buf}).promise;
+    let text = '';
+    for(let i=1;i<=pdf.numPages;i++){
+      const page = await pdf.getPage(i);
+      const content = await page.getTextContent();
+      text += content.items.map(it=>it.str).join(' ') + ' ';
+    }
+    return text.replace(/\s+/g,' ');
+  }
+  async function fileToSheet(file){
+    const buf = await file.arrayBuffer();
+    const wb = XLSX.read(buf, {type:'array'});
+    const sh = wb.Sheets[wb.SheetNames[0]];
+    return XLSX.utils.sheet_to_json(sh, {header:1, raw:false, defval:''});
+  }
+  async function fileToSheetInfo(file){
+    const buf = await file.arrayBuffer();
+    const wb = XLSX.read(buf, {type:'array'});
+    const sheetName = wb.SheetNames[0];
+    const sh = wb.Sheets[sheetName];
+    const aoa = XLSX.utils.sheet_to_json(sh, {header:1, raw:false, defval:''});
+    return {aoa, sheetName};
+  }
+  function excelDateToISO(d){
+    if(d instanceof Date) return d.toISOString().slice(0,10);
+    const s = String(d||'');
+    let m = s.match(/(\d{4})-(\d{2})-(\d{2})/);
+    if(m) return `${m[1]}-${m[2]}-${m[3]}`;
+    m = s.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
+    if(m) return `${m[3]}-${m[2].padStart(2,'0')}-${m[1].padStart(2,'0')}`;
+    // Formato corto M/D/AA (mes/día/año) que trae la columna "Fecha" del extracto nativo de Galicia
+    m = s.match(/^(\d{1,2})\/(\d{1,2})\/(\d{2})$/);
+    if(m) return `20${m[3]}-${m[1].padStart(2,'0')}-${m[2].padStart(2,'0')}`;
+    return '';
+  }
+  // Extracto nativo de Galicia (hoja 'Movimientos') — reconstruye la venta de cheques cheque por cheque
+  function parseGaliciaMovimientosVenta(aoa){
+    if(!aoa || aoa.length<2) return [];
+    const header = aoa[0].map(h=>String(h).trim());
+    const iFecha = header.indexOf('Fecha'), iDesc = header.indexOf('Descripción'),
+          iDeb = header.indexOf('Débitos'), iCred = header.indexOf('Créditos');
+    if(iFecha===-1 || iDesc===-1 || iDeb===-1 || iCred===-1) return [];
+    const out = [];
+    for(let i=1;i<aoa.length;i++){
+      const row = aoa[i];
+      if(String(row[iDesc]).trim() !== 'Credito Descuento Documento') continue;
+      const importe = parseAR(row[iCred]);
+      const fecha = excelDateToISO(row[iFecha]);
+      let interes=0, iva=0, sellos=0, iibb=0;
+      for(let j=i+1;j<Math.min(i+6,aoa.length);j++){
+        const d = String(aoa[j][iDesc]).trim();
+        if(d === 'Credito Descuento Documento') break;
+        if(d === 'Interes Nominal') interes = parseAR(aoa[j][iDeb]);
+        else if(d === 'Iva') iva = parseAR(aoa[j][iDeb]);
+        else if(d === 'Impuesto De Sellos') sellos = parseAR(aoa[j][iDeb]);
+        else if(d === 'Imp. Ing. Brutos') iibb = parseAR(aoa[j][iDeb]);
+      }
+      out.push({ banco:'Galicia', nro:'', fecha, importe, interes, iva, percep:iibb, sellos, comision:0, nota:'', empresa:'Spotsline' });
+    }
+    return out;
+  }
+
+  function parseGalicia(text){
+    const out = [];
+    const reBlock = /Cantidad de cheques\s+Total de cheques\s+Inter[eé]s\s+IVA sin inter[eé]s\s+(\d+)\s+\$\s*([\d.,]+)\s+\$\s*([\d.,]+)\s+\$\s*([\d.,]+)\s+IVA Percepci[oó]n\s+Sellos\s+Ingresos Brutos\s+Total con descuentos\s+\$\s*([\d.,]+)\s+\$\s*([\d.,]+)\s+\$\s*([\d.,]+)\s+\$\s*([\d.,]+)/gi;
+    const reHead = /N[°º]\s*de operaci[oó]n\s+Tipo de Venta\s+Fecha ejecutada\s+(\d+)\s+.*?(\d{2}\/\d{2}\/\d{4})/gi;
+    let heads = [], m;
+    while((m = reHead.exec(text))) heads.push({nro:m[1], fecha:m[2]});
+    let i=0;
+    while((m = reBlock.exec(text))){
+      const h = heads[i]||{};
+      out.push({ banco:'Galicia', nro:h.nro||'', fecha:toISO(h.fecha)||'', importe:parseAR(m[2]),
+        interes:parseAR(m[3]), iva:parseAR(m[4]), percep:parseAR(m[5]), sellos:parseAR(m[6]),
+        comision:0, nota:'', empresa:'Spotsline' });
+      i++;
+    }
+    return out;
+  }
+  function parsePatagonia(text){
+    const out = [];
+    const reHead = /Operaci[oó]n nro\.\s+(\d+)\s+Fecha\s+(\d{2}\/\d{2}\/\d{4})\s+Estado solicitud/i;
+    const reImporte = /Importe\s+\$\s*([\d.,]+)\s+Tasa/i;
+    const reInt = /Intereses\s+\$\s*([\d.,]+)\s+\$\s*([\d.,]+)\s+\$\s*([\d.,]+)\s+\$\s*([\d.,]+)/i;
+    const reSellos = /Impuesto de sellos\s+\$\s*([\d.,]+)/i;
+    const reCom = /Comisi[oó]n VACO\s+\$\s*([\d.,]+)\s+\$\s*([\d.,]+)\s+\$\s*([\d.,]+)/i;
+    const head = reHead.exec(text), imp = reImporte.exec(text), it = reInt.exec(text),
+          se = reSellos.exec(text), co = reCom.exec(text);
+    if(it){
+      out.push({ banco:'Patagonia', nro:head?head[1]:'', fecha: head?(toISO(head[2])||''):'', importe: imp?parseAR(imp[1]):0,
+        interes:parseAR(it[1]), iva:parseAR(it[2]), percep:parseAR(it[3])+parseAR(it[4]),
+        sellos: se?parseAR(se[1]):0,
+        comision: co?(parseAR(co[1])+parseAR(co[2])+parseAR(co[3])):0,
+        nota: head? '' : 'No se detectó la fecha automáticamente, completala a mano', empresa:'Spotsline' });
+    }
+    return out;
+  }
+  function parseProvincia(text){
+    const out = [];
+    const re = /(\d{2}\/\d{2}\/\d{4})\s+COMISION E INTERESES DESCUENTO DOCUMENTO\s+(-?[\d.,]+)/gi;
+    let m;
+    while((m = re.exec(text))){
+      const amt = Math.abs(parseAR(m[2]));
+      const tail = text.slice(m.index, m.index+400);
+      const pm = tail.match(/IMPUESTO I\.BRUTOS - PERCEPCION\s+(-?[\d.,]+)/i);
+      const percep = pm? Math.abs(parseAR(pm[1])) : 0;
+      out.push({ banco:'Provincia', nro:'', fecha:toISO(m[1])||'', importe:0,
+        interes:amt, iva:0, percep:percep, sellos:0, comision:0,
+        nota:'Provincia no discrimina interés de comisión en el extracto', empresa:'Spotsline' });
+    }
+    return out;
+  }
+  function parseCredicoopSheet(aoa){
+    const out = [];
+    for(const row of aoa){
+      const idxConcept = row.findIndex(c => String(c).trim().toLowerCase() === 'interes');
+      if(idxConcept === -1) continue;
+      let fecha = '';
+      for(const cell of row){
+        const mm = String(cell).trim().match(/^(\d{2})\/(\d{2})\/(\d{2})$/);
+        if(mm){ fecha = `20${mm[3]}-${mm[2]}-${mm[1]}`; break; }
+      }
+      let amount = 0;
+      for(let i=row.length-1;i>=0;i--){
+        const v = String(row[i]).trim();
+        if(/^-?[\d.,]+$/.test(v) && /[\d]/.test(v)){
+          const n = Math.abs(parseAR(v));
+          if(n > 0){ amount = n; break; }
+        }
+      }
+      if(amount>0) out.push({ banco:'Credicoop', nro:'', fecha, importe:0, interes:amount, iva:0, percep:0, sellos:0, comision:0, nota:'', empresa:'Spotsline' });
+    }
+    return out;
+  }
+
+  // Formato "Consulta de Movimientos" de Provincia: hoja 'report' con columnas Fecha / Descripción / Importe / Saldo
+  function parseProvinciaMovimientosXls(aoa){
+    const out = [];
+    let idx = null;
+    for(const row of aoa){
+      const cells = row.map(c=>String(c).trim());
+      const fi = cells.indexOf('Fecha');
+      const di = cells.findIndex(c=>c.toLowerCase().startsWith('descripci'));
+      const ii = cells.indexOf('Importe');
+      if(fi>-1 && di>-1 && ii>-1){ idx = {fecha:fi, desc:di, importe:ii}; break; }
+    }
+    if(!idx) return out;
+    const monthMap = {ene:'01',feb:'02',mar:'03',abr:'04',may:'05',jun:'06',jul:'07',ago:'08',sep:'09',oct:'10',nov:'11',dic:'12'};
+    for(let i=0;i<aoa.length;i++){
+      const row = aoa[i];
+      const desc = String(row[idx.desc]||'');
+      if(!/COMISION E INTERESES DESCUENTO DOCUMENTO/i.test(desc)) continue;
+      const fechaRaw = String(row[idx.fecha]||'');
+      const m = fechaRaw.match(/(\d{1,2})-([a-zA-Z]{3})-(\d{4})/);
+      let fecha = '';
+      if(m){ const mm = monthMap[m[2].toLowerCase()]; if(mm) fecha = `${m[3]}-${mm}-${m[1].padStart(2,'0')}`; }
+      const amount = Math.abs(parseAR(row[idx.importe]));
+      // el "VALORES NEGOCIADOS" que sigue (dentro del mismo bloque) es el importe nominal del cheque descontado
+      let importeVendido = 0;
+      for(let j=i+1; j<Math.min(i+10, aoa.length); j++){
+        if(/VALORES NEGOCIADOS/i.test(String(aoa[j][idx.desc]||''))){
+          importeVendido = Math.abs(parseAR(aoa[j][idx.importe]));
+          break;
+        }
+      }
+      if(amount>0){
+        out.push({ banco:'Provincia', nro:'', fecha, importe:importeVendido, interes:amount, iva:0, percep:0, sellos:0, comision:0,
+          nota:'Provincia no discrimina interés de comisión en el extracto', empresa:'Spotsline' });
+      }
+    }
+    return out;
+  }
+  // ==================== GASTOS BANCARIOS (extractos de cuenta) ====================
+  function detectBankFromFilename(fn){
+    const f = fn.toLowerCase();
+    if(f.includes('galicia')) return 'Galicia';
+    if(f.includes('patagonia')) return 'Patagonia';
+    if(f.includes('credicoop')) return 'Credicoop';
+    if(f.includes('provincia')) return 'Provincia';
+    if(f.includes('comafi')) return 'Comafi';
+    if(f.includes('icbc')) return 'ICBC';
+    if(f.includes('macro')) return 'Macro';
+    if(f.includes('nacion') || f.includes('nación')) return 'Nación';
+    return 'Otro';
+  }
+  function detectEmpresaFromFilename(fn){
+    return /\bspl\b/i.test(fn) ? 'SPL Distribuidora' : 'Spotsline';
+  }
+  function toISOtextmonth(s){
+    const m = String(s).match(/(\d{1,2})-([a-zA-Z]{3})-(\d{4})/);
+    if(!m) return '';
+    const monthMap = {ene:'01',feb:'02',mar:'03',abr:'04',may:'05',jun:'06',jul:'07',ago:'08',sep:'09',oct:'10',nov:'11',dic:'12'};
+    const mm = monthMap[m[2].toLowerCase()];
+    if(!mm) return '';
+    return `${m[3]}-${mm}-${m[1].padStart(2,'0')}`;
+  }
+  function categorizeMovement(concept, desc, family){
+    const text = (String(concept||'')+' '+String(desc||'')).toUpperCase();
+    if(family==='principal' && /^DESC\.DOC$/.test(String(concept||'').trim().toUpperCase())){
+      return {cat:'Descuento de cheques (ya contado en Operaciones)', cost:false, exclude:true};
+    }
+    if(family==='provincia' && /COMISION E INTERESES DESCUENTO DOCUMENTO|VALORES NEGOCIADOS/.test(text)){
+      return {cat:'Descuento de cheques (ya contado en Operaciones)', cost:false, exclude:true};
+    }
+    if(/INTERES/.test(text)) return {cat:'Interés por descubierto', cost:true};
+    if(/COMISION|^COM\.|COMEXCACUE|DATANET|GESTION DE DOCUMENTOS DIFERIDOS|G\.DE CHEQUE/.test(text)) return {cat:'Comisiones', cost:true};
+    if(/SELLO/.test(text)) return {cat:'Sellos', cost:true};
+    if(/\bIVA\b/.test(text)) return {cat:'IVA', cost:true};
+    if(/INGRESOS BRUTO|IIBB|SIRCREB|PERCEPCION I\. BRUTOS|IB BS AS|ING\.BR|GRAVAMEN IB/.test(text)) return {cat:'IIBB / Percepciones', cost:true};
+    if(/25413|IMPUESTO AL DEBITO|IMPUESTO AL CREDITO|IMPUESTO DEBITO|IMPUESTO CREDITO|GRAVAMEN LEY 25413|IMP\.DB\/CR BANCARIOS|DB\/CR BANCARIOS/.test(text)) return {cat:'Impuesto Ley 25413', cost:true};
+    if(/EMBARGO|EMB\.JUD|LEV\.EMB/.test(text)) return {cat:'Embargo judicial', cost:false};
+    return {cat:'Movimiento neutro', cost:false};
+  }
+  // Comafi / Galicia / ICBC / Macro / Patagonia (hoja 'principal', columna Concepto/Cod.Op.)
+  function parsePrincipalSheet(aoa, filename){
+    const out = [];
+    let hidx = -1;
+    for(let i=0;i<aoa.length;i++){ if(String(aoa[i][0]).trim().startsWith('Concepto')){ hidx=i; break; } }
+    if(hidx===-1) return out;
+    const banco = detectBankFromFilename(filename);
+    const empresa = detectEmpresaFromFilename(filename);
+    for(let i=hidx+1;i<aoa.length;i++){
+      const row = aoa[i];
+      const concept = String(row[0]||'').trim();
+      if(!concept) continue;
+      const fecha = toISO(String(row[1]||''));
+      const importe = Math.abs(parseAR(row[4]));
+      if(importe===0) continue;
+      const desc = String(row[5]||'');
+      const {cat, cost, exclude} = categorizeMovement(concept, desc, 'principal');
+      out.push({ id:uid(), banco, empresa, fecha, concepto: concept+(desc.trim()?(' — '+desc.trim()):''), importe, categoria:cat, cost:!!cost, exclude:!!exclude });
+    }
+    return out;
+  }
+  // Credicoop (hoja 'saldos_y_movimientos')
+  function parseCredicoopMovimientos(aoa, filename){
+    const out = [];
+    let hidx = -1;
+    for(let i=0;i<aoa.length;i++){ if(String(aoa[i][1]).trim()==='Fecha' && String(aoa[i][2]).trim()==='Concepto'){ hidx=i; break; } }
+    if(hidx===-1) return out;
+    const empresa = detectEmpresaFromFilename(filename);
+    for(let i=hidx+1;i<aoa.length;i++){
+      const row = aoa[i];
+      const fechaRaw = String(row[1]||'').trim();
+      if(!fechaRaw) continue;
+      const fecha = toISO(fechaRaw);
+      const concept = String(row[2]||'').trim();
+      const debito = parseAR(row[4]);
+      const credito = parseAR(row[5]);
+      const importe = debito>0? debito : credito;
+      if(!concept || importe===0) continue;
+      const {cat, cost, exclude} = categorizeMovement(concept, '', 'credicoop');
+      out.push({ id:uid(), banco:'Credicoop', empresa, fecha, concepto:concept, importe,
+        categoria: debito>0? cat : 'Movimiento neutro (crédito)', cost: debito>0 && cost, exclude:!!exclude });
+    }
+    return out;
+  }
+  // Provincia (hoja 'report') — versión general para gastos bancarios (excluye lo ya contado en Operaciones)
+  function parseProvinciaGastos(aoa, filename){
+    const out = [];
+    let idx = null;
+    for(const row of aoa){
+      const cells = row.map(c=>String(c).trim());
+      const fi = cells.indexOf('Fecha'), di = cells.findIndex(c=>c.toLowerCase().startsWith('descripci')), ii = cells.indexOf('Importe');
+      if(fi>-1 && di>-1 && ii>-1){ idx = {fecha:fi, desc:di, importe:ii}; break; }
+    }
+    if(!idx) return out;
+    const empresa = detectEmpresaFromFilename(filename);
+    for(const row of aoa){
+      const desc = String(row[idx.desc]||'').trim();
+      if(!desc) continue;
+      const fecha = toISOtextmonth(row[idx.fecha]);
+      const importe = Math.abs(parseAR(row[idx.importe]));
+      if(importe===0) continue;
+      const {cat, cost, exclude} = categorizeMovement(desc, '', 'provincia');
+      out.push({ id:uid(), banco:'Provincia', empresa, fecha, concepto:desc, importe, categoria:cat, cost:!!cost, exclude:!!exclude });
+    }
+    return out;
+  }
+  // Banco Nación
+  function parseNacionMovimientos(aoa, filename){
+    const out = [];
+    let hidx = -1;
+    for(let i=0;i<aoa.length;i++){ if(String(aoa[i][0]).trim()==='Fecha' && String(aoa[i][2]).trim()==='Concepto'){ hidx=i; break; } }
+    if(hidx===-1) return out;
+    const empresa = detectEmpresaFromFilename(filename);
+    for(let i=hidx+1;i<aoa.length;i++){
+      const row = aoa[i];
+      const fecha = toISO(String(row[0]||''));
+      if(!fecha) continue;
+      const concept = String(row[2]||'').trim();
+      const importe = Math.abs(parseAR(row[3]));
+      if(!concept || importe===0) continue;
+      const {cat, cost, exclude} = categorizeMovement(concept, '', 'nacion');
+      out.push({ id:uid(), banco:'Nación', empresa, fecha, concepto:concept, importe, categoria:cat, cost:!!cost, exclude:!!exclude });
+    }
+    return out;
+  }
+  // Extracto nativo de Galicia (hoja 'Movimientos') — gastos generales, excluyendo lo ya contado como venta de cheques
+  function parseGaliciaMovimientosGastos(aoa, filename){
+    const out = [];
+    if(!aoa || aoa.length<2) return out;
+    const header = aoa[0].map(h=>String(h).trim());
+    const iFecha = header.indexOf('Fecha'), iDesc = header.indexOf('Descripción'), iDeb = header.indexOf('Débitos');
+    if(iFecha===-1 || iDesc===-1 || iDeb===-1) return out;
+    const empresa = detectEmpresaFromFilename(filename);
+    const groupedIdx = new Set();
+    for(let i=1;i<aoa.length;i++){
+      if(String(aoa[i][iDesc]).trim() !== 'Credito Descuento Documento') continue;
+      for(let j=i+1;j<Math.min(i+6,aoa.length);j++){
+        const d = String(aoa[j][iDesc]).trim();
+        if(d === 'Credito Descuento Documento') break;
+        if(['Interes Nominal','Iva','Impuesto De Sellos','Imp. Ing. Brutos'].includes(d)) groupedIdx.add(j);
+      }
+    }
+    for(let i=1;i<aoa.length;i++){
+      const row = aoa[i];
+      const concept = String(row[iDesc]||'').trim();
+      if(!concept) continue;
+      const importe = Math.abs(parseAR(row[iDeb]));
+      if(importe===0) continue;
+      const fecha = excelDateToISO(row[iFecha]);
+      if(groupedIdx.has(i)){
+        out.push({ id:uid(), banco:'Galicia', empresa, fecha, concepto:concept, importe, categoria:'Descuento de cheques (ya contado en Operaciones)', cost:false, exclude:true });
+        continue;
+      }
+      if(concept === 'Credito Descuento Documento') continue; // es un crédito, no un costo
+      const {cat, cost, exclude} = categorizeMovement(concept, '', 'galicia_mov');
+      out.push({ id:uid(), banco:'Galicia', empresa, fecha, concepto:concept, importe, categoria:cat, cost:!!cost, exclude:!!exclude });
+    }
+    return out;
+  }
+
+  // ==== Formato unificado "Movimientos" (usado por todos los bancos desde jul/2026) ====
+  // Título con nombre del banco/empresa arriba, columnas Fecha/Concepto/Débitos/Créditos/Saldo (nombres pueden variar levemente)
+  function normHeaderTxt(s){ return String(s||'').trim().toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,''); }
+  function detectBankFromMovHeader(aoa){
+    const head = aoa.slice(0,4).map(r=>r.join(' ')).join(' ').toUpperCase();
+    if(/GALICIA/.test(head)) return 'Galicia';
+    if(/PATAGONIA/.test(head)) return 'Patagonia';
+    if(/PROVINCIA/.test(head)) return 'Provincia';
+    if(/CREDICOOP/.test(head)) return 'Credicoop';
+    if(/COMAFI/.test(head)) return 'Comafi';
+    if(/ICBC/.test(head)) return 'ICBC';
+    if(/MACRO/.test(head)) return 'Macro';
+    if(/NACION|NACIÓN/.test(head)) return 'Nación';
+    return 'Otro';
+  }
+  function detectEmpresaFromMovHeader(aoa){
+    const head = aoa.slice(0,4).map(r=>r.join(' ')).join(' ').toUpperCase();
+    return /\bSPL\b|DISTRIBUIDORA/.test(head) ? 'SPL Distribuidora' : 'Spotsline';
+  }
+  function findMovHeader(aoa){
+    for(let i=0;i<aoa.length;i++){
+      const row = aoa[i].map(normHeaderTxt);
+      const iFecha = row.indexOf('fecha');
+      const iConcepto = row.findIndex(c=>c==='concepto'||c==='descripcion');
+      if(iFecha>-1 && iConcepto>-1){
+        const iDeb = row.findIndex(c=>c.startsWith('debito'));
+        const iCred = row.findIndex(c=>c.startsWith('credito'));
+        return {rowIdx:i, iFecha, iConcepto, iDeb, iCred};
+      }
+    }
+    return null;
+  }
+  function toISOanyDate(d){
+    if(d instanceof Date) return d.toISOString().slice(0,10);
+    const s = String(d||'');
+    let m = s.match(/(\d{4})-(\d{2})-(\d{2})/); if(m) return `${m[1]}-${m[2]}-${m[3]}`;
+    m = s.match(/(\d{1,2})\/(\d{1,2})\/(\d{4})/); if(m) return `${m[3]}-${m[2].padStart(2,'0')}-${m[1].padStart(2,'0')}`;
+    m = s.match(/(\d{1,2})\/(\d{1,2})\/(\d{2})$/); if(m) return `20${m[3]}-${m[2].padStart(2,'0')}-${m[1].padStart(2,'0')}`;
+    return '';
+  }
+  // Extrae venta de cheques cuando viene incluida en el formato unificado (hoy: Provincia y Patagonia)
+  function parseMovimientosVenta(aoa, filename){
+    const bank = detectBankFromMovHeader(aoa);
+    const empresa = detectEmpresaFromMovHeader(aoa);
+    const h = findMovHeader(aoa);
+    if(!h || (bank!=='Provincia' && bank!=='Patagonia')) return [];
+    const rows = aoa.slice(h.rowIdx+1);
+    const ventas = [];
+    if(bank === 'Provincia'){
+      const claimed = new Set();
+      for(let i=0;i<rows.length;i++){
+        const c = String(rows[i][h.iConcepto]||'').toUpperCase();
+        if(!c.includes('COMISION E INTERESES DESCUENTO DOCUMENTO')) continue;
+        const interes = parseAR(rows[i][h.iDeb]);
+        const fecha = toISOanyDate(rows[i][h.iFecha]);
+        let importe = 0;
+        outer: for(let d=1; d<=10; d++){
+          for(const j of [i-d, i+d]){
+            if(j<0 || j>=rows.length || claimed.has(j)) continue;
+            const cc = String(rows[j][h.iConcepto]||'').toUpperCase();
+            if(cc.includes('VALORES NEGOCIADOS')){ importe = parseAR(rows[j][h.iCred]); claimed.add(j); break outer; }
+          }
+        }
+        ventas.push({ banco:'Provincia', empresa, nro:'', fecha, importe, interes, iva:0, percep:0, sellos:0, comision:0,
+          nota:'Provincia no discrimina interés de comisión en el extracto' });
+      }
+    }
+    if(bank === 'Patagonia'){
+      for(let i=0;i<rows.length;i++){
+        const c = String(rows[i][h.iConcepto]||'').toUpperCase();
+        if(c !== 'DESCUENTO DE ECHEQ') continue;
+        const importe = parseAR(rows[i][h.iCred]);
+        const fecha = toISOanyDate(rows[i][h.iFecha]);
+        let interes=0, iva=0, percep=0, sellos=0;
+        for(let d=-10; d<=10; d++){
+          const j = i+d;
+          if(j<0 || j>=rows.length || j===i) continue;
+          const cc = String(rows[j][h.iConcepto]||'').toUpperCase();
+          if(cc==='INTS. S/DESC. ECHEQ') interes = parseAR(rows[j][h.iDeb]);
+          else if(cc==='IVA ALICUOTA GENERAL') iva += parseAR(rows[j][h.iDeb]);
+          else if(cc==='IVA PERCEPCION') percep += parseAR(rows[j][h.iDeb]);
+          else if(cc==='IIBB PERCEPCION') percep += parseAR(rows[j][h.iDeb]);
+          else if(cc==='IMPUESTO A LOS SELLOS') sellos = parseAR(rows[j][h.iDeb]);
+        }
+        ventas.push({ banco:'Patagonia', empresa, nro:'', fecha, importe, interes, iva, percep, sellos, comision:0, nota:'' });
+      }
+    }
+    return ventas;
+  }
+  // Gastos bancarios generales desde el formato unificado (todos los bancos)
+  function parseMovimientosGastos(aoa, filename){
+    const bank = detectBankFromMovHeader(aoa);
+    const empresa = detectEmpresaFromMovHeader(aoa);
+    const h = findMovHeader(aoa);
+    if(!h) return [];
+    const rows = aoa.slice(h.rowIdx+1);
+    const excludedIdx = new Set();
+    if(bank === 'Provincia'){
+      const claimed = new Set();
+      for(let i=0;i<rows.length;i++){
+        const c = String(rows[i][h.iConcepto]||'').toUpperCase();
+        if(!c.includes('COMISION E INTERESES DESCUENTO DOCUMENTO')) continue;
+        excludedIdx.add(i);
+        outer2: for(let d=1; d<=10; d++){
+          for(const j of [i-d, i+d]){
+            if(j<0 || j>=rows.length || claimed.has(j)) continue;
+            const cc = String(rows[j][h.iConcepto]||'').toUpperCase();
+            if(cc.includes('VALORES NEGOCIADOS')){ claimed.add(j); excludedIdx.add(j); break outer2; }
+          }
+        }
+      }
+    }
+    if(bank === 'Patagonia'){
+      for(let i=0;i<rows.length;i++){
+        const c = String(rows[i][h.iConcepto]||'').toUpperCase();
+        if(c !== 'DESCUENTO DE ECHEQ') continue;
+        excludedIdx.add(i);
+        for(let d=-10; d<=10; d++){
+          const j = i+d;
+          if(j<0 || j>=rows.length || j===i) continue;
+          const cc = String(rows[j][h.iConcepto]||'').toUpperCase();
+          if(['INTS. S/DESC. ECHEQ','IVA ALICUOTA GENERAL','IVA PERCEPCION','IIBB PERCEPCION','IMPUESTO A LOS SELLOS'].includes(cc)) excludedIdx.add(j);
+        }
+      }
+    }
+    const out = [];
+    for(let i=0;i<rows.length;i++){
+      const concept = String(rows[i][h.iConcepto]||'').trim();
+      if(!concept || /^SALDO|^TOTALES/i.test(concept)) continue;
+      const debito = parseAR(rows[i][h.iDeb]);
+      if(debito<=0) continue;
+      const fecha = toISOanyDate(rows[i][h.iFecha]);
+      if(excludedIdx.has(i)){
+        out.push({ id:uid(), banco:bank, empresa, fecha, concepto:concept, importe:debito, categoria:'Descuento de cheques (ya contado en Operaciones)', cost:false, exclude:true });
+        continue;
+      }
+      const {cat, cost, exclude} = categorizeMovement(concept, '', bank.toLowerCase());
+      out.push({ id:uid(), banco:bank, empresa, fecha, concepto:concept, importe:debito, categoria:cat, cost:!!cost, exclude:!!exclude });
+    }
+    return out;
+  }
+
+  async function processGastoFile(file){
+    try{
+      const buf = await file.arrayBuffer();
+      const wb = XLSX.read(buf, {type:'array', cellDates:true});
+      const sheetName = wb.SheetNames[0];
+      const sh = wb.Sheets[sheetName];
+      let found = [];
+      if(sheetName === 'Movimientos'){
+        const aoaRaw = XLSX.utils.sheet_to_json(sh, {header:1, raw:true, defval:''});
+        // primero probamos el formato nativo de Galicia (columnas Descripción+Concepto separadas)
+        found = parseGaliciaMovimientosGastos(aoaRaw, file.name);
+        if(found.length === 0) found = parseMovimientosGastos(aoaRaw, file.name);
+      } else {
+        const aoa = XLSX.utils.sheet_to_json(sh, {header:1, raw:false, defval:''});
+        if(sheetName === 'principal') found = parsePrincipalSheet(aoa, file.name);
+        else if(sheetName === 'saldos_y_movimientos') found = parseCredicoopMovimientos(aoa, file.name);
+        else if(sheetName === 'report') found = parseProvinciaGastos(aoa, file.name);
+        else found = parseNacionMovimientos(aoa, file.name);
+      }
+      if(found.length === 0) return {ok:false, msg:`No reconocí el formato de "${file.name}".`};
+      let added = 0;
+      for(const g of found){ await addGasto(g); added++; }
+      const bank = found[0].banco, emp = found[0].empresa;
+      const excluded = found.filter(g=>g.exclude).length;
+      const skipped = found.length - added;
+      return {ok:true, msg:`${file.name}: ${added} movimiento(s) nuevo(s) de ${bank} (${emp})${excluded?`, ${excluded} ya contados en Operaciones`:''}${skipped?`, ${skipped} ya estaban cargados`:''}.`};
+    }catch(e){ return {ok:false, msg:`Error leyendo "${file.name}": ${e.message}`}; }
+  }
+
+  // ==================== CARGA ÚNICA: detecta y deriva cada archivo a donde corresponda ====================
+  async function processAnyFile(file){
+    const fp = fileFingerprint(file);
+    if(uploadedFiles.has(fp)){
+      return [{ ok:false, msg:`"${file.name}": ya habías subido este mismo archivo antes — no lo cargué de nuevo para no duplicar. Si es una versión corregida, cambiale el nombre y volvé a subirlo.` }];
+    }
+    const ext = file.name.split('.').pop().toLowerCase();
+    try{
+      if(ext === 'pdf'){
+        if(typeof pdfjsLib === 'undefined'){
+          return [{ ok:false, msg:`No se pudo cargar el lector de PDF (revisá tu conexión). "${file.name}" no se procesó.` }];
+        }
+        const text = await fileToText(file);
+        const bank = detectBankFromText(text);
+        // Patagonia: puede ser el comprobante puntual de ECHEQs, o el resumen general de cuenta (trae venta + gastos)
+        if(bank === 'Patagonia'){
+          const out = [];
+          let venta = parsePatagonia(text);
+          let esResumen = false;
+          if(venta.length === 0){ venta = parsePatagoniaResumenVenta(text); esResumen = venta.length>0; }
+          if(venta.length){
+            for(const o of venta) await addOp(o);
+            out.push({ ok:true, msg:`${file.name}: se agregaron ${venta.length} operación(es) de Patagonia → Operaciones.` });
+          }
+          if(esResumen){
+            const gasto = parsePatagoniaResumenGastos(text, file.name);
+            if(gasto.length){
+              for(const g of gasto) await addGasto(g);
+              const costCount = gasto.filter(g=>g.cost && !g.exclude).length;
+              out.push({ ok:true, msg:`${file.name}: se agregaron ${costCount} movimiento(s) de costo (Patagonia) → Gastos bancarios.` });
+            }
+          }
+          if(out.length===0) return [{ ok:false, msg:`"${file.name}": banco detectado Patagonia, pero no pude leer los importes. Cargalo a mano.` }];
+          await markFileUploaded(fp);
+          if(esResumen) out.push({ ok:true, msg:`⚠️ Si ya tenés cargado el comprobante puntual de "ECHEQs Descuento" para estas mismas operaciones, no subas también el resumen general del mismo mes — se duplicaría la venta de cheques.` });
+          return out;
+        }
+        const r = await processOpsFile(file);
+        if(r.ok) await markFileUploaded(fp);
+        return [{ ok:r.ok, msg: r.msg + (r.ok? ' → Operaciones.' : '') }];
+      }
+
+      const buf = await file.arrayBuffer();
+      const wb = XLSX.read(buf, {type:'array', cellDates:true});
+      const sheetName = wb.SheetNames[0];
+      const sh = wb.Sheets[sheetName];
+      const aoaStr = XLSX.utils.sheet_to_json(sh, {header:1, raw:false, defval:''});
+
+      // 1) Cartera de cheques
+      const headerRow0 = (aoaStr[0]||[]).map(h=>String(h).trim());
+      if(headerRow0.includes('Cliente/Proveedor') && headerRow0.includes('Fecha de Pago')){
+        const r = await processCarteraFile(file);
+        if(r.ok) await markFileUploaded(fp);
+        return [{ ok:r.ok, msg: r.msg + (r.ok? ' → Cartera.' : '') }];
+      }
+
+      // 2) Credicoop venta de cheques (hoja diferidos_debito_credito)
+      if(sheetName === 'diferidos_debito_credito'){
+        const found = parseCredicoopSheet(aoaStr);
+        if(found.length===0) return [{ok:false, msg:`"${file.name}": no encontré filas de interés.`}];
+        for(const o of found) await addOp(o);
+        await markFileUploaded(fp);
+        return [{ok:true, msg:`${file.name}: se agregaron ${found.length} operación(es) de Credicoop → Operaciones.`}];
+      }
+
+      // 3) Hoja 'Movimientos' — puede traer venta de cheques y/o gastos generales, se agregan ambos si están
+      if(sheetName === 'Movimientos'){
+        const out = [];
+        let venta = parseGaliciaMovimientosVenta(aoaStr);
+        let ventaLabel = venta.length? 'Galicia' : '';
+        if(venta.length === 0){ venta = parseMovimientosVenta(aoaStr, file.name); ventaLabel = venta[0]? venta[0].banco : ''; }
+        if(venta.length){
+          for(const o of venta) await addOp(o);
+          out.push({ok:true, msg:`${file.name}: se agregaron ${venta.length} operación(es) de ${ventaLabel} → Operaciones.`});
+        }
+        const aoaRaw = XLSX.utils.sheet_to_json(sh, {header:1, raw:true, defval:''});
+        let gasto = parseGaliciaMovimientosGastos(aoaRaw, file.name);
+        if(gasto.length === 0) gasto = parseMovimientosGastos(aoaRaw, file.name);
+        if(gasto.length){
+          for(const g of gasto) await addGasto(g);
+          const costCount = gasto.filter(g=>g.cost && !g.exclude).length;
+          out.push({ok:true, msg:`${file.name}: se agregaron ${costCount} movimiento(s) de costo (${gasto[0].banco}) → Gastos bancarios.`});
+        }
+        if(out.length===0) return [{ok:false, msg:`"${file.name}": no reconocí el formato.`}];
+        await markFileUploaded(fp);
+        return out;
+      }
+
+      // 4) Provincia viejo (hoja 'report') — venta y gastos del mismo archivo
+      if(sheetName === 'report'){
+        const out = [];
+        const venta = parseProvinciaMovimientosXls(aoaStr);
+        if(venta.length){
+          for(const o of venta) await addOp(o);
+          out.push({ok:true, msg:`${file.name}: se agregaron ${venta.length} operación(es) de Provincia → Operaciones.`});
+        }
+        const gasto = parseProvinciaGastos(aoaStr, file.name);
+        if(gasto.length){
+          for(const g of gasto) await addGasto(g);
+          const costCount = gasto.filter(g=>g.cost && !g.exclude).length;
+          out.push({ok:true, msg:`${file.name}: se agregaron ${costCount} movimiento(s) de costo → Gastos bancarios.`});
+        }
+        if(out.length===0) return [{ok:false, msg:`"${file.name}": no reconocí el formato.`}];
+        await markFileUploaded(fp);
+        return out;
+      }
+
+      // 5) Formatos que solo traen gastos generales
+      let gasto = [];
+      if(sheetName === 'principal') gasto = parsePrincipalSheet(aoaStr, file.name);
+      else if(sheetName === 'saldos_y_movimientos') gasto = parseCredicoopMovimientos(aoaStr, file.name);
+      else gasto = parseNacionMovimientos(aoaStr, file.name);
+      if(gasto.length){
+        for(const g of gasto) await addGasto(g);
+        await markFileUploaded(fp);
+        return [{ok:true, msg:`${file.name}: se agregaron ${gasto.length} movimiento(s) de ${gasto[0].banco} → Gastos bancarios.`}];
+      }
+      return [{ok:false, msg:`"${file.name}": no reconocí el formato.`}];
+    }catch(e){
+      return [{ok:false, msg:`Error leyendo "${file.name}": ${e.message}`}];
+    }
+  }
+
+  // Resumen general de cuenta de Patagonia en PDF (no el comprobante de ECHEQs) — trae venta de cheques y gastos generales juntos
+  function parsePatagoniaResumenVenta(text){
+    const out = [];
+    const re = /(\d{1,2}\/\d{2}\/\d{2})\s+DESCUENTO DE ECHEQ\s+(-?[\d.,]+,\d{2})/g;
+    let m;
+    while((m = re.exec(text))){
+      const fechaRaw = m[1];
+      const importe = parseAR(m[2]);
+      const window = text.slice(m.index, m.index+1000);
+      const nextIdx = window.indexOf('DESCUENTO DE ECHEQ', 10);
+      const block = nextIdx>-1 ? window.slice(0, nextIdx) : window;
+      const grab = (label) => { const mm = block.match(new RegExp(label+'\\s+(-?[\\d.,]+,\\d{2})','i')); return mm? parseAR(mm[1]) : 0; };
+      const grabSum = (label) => { const r = new RegExp(label+'\\s+(-?[\\d.,]+,\\d{2})','gi'); let mm,t=0; while((mm=r.exec(block))) t+=parseAR(mm[1]); return t; };
+      const interes = grab('INTS\\. S/DESC\\. ECHEQ');
+      const iva = grabSum('IVA ALICUOTA GENERAL');
+      const percep = grabSum('IVA PERCEPCION') + grabSum('IIBB PERCEPCION');
+      const sellos = grab('IMPUESTO A LOS SELLOS');
+      const comision = grab('COMISION VALOR AL COBRO -CPD');
+      const dm = fechaRaw.match(/(\d{1,2})\/(\d{2})\/(\d{2})/);
+      const fecha = dm ? `20${dm[3]}-${dm[2]}-${dm[1].padStart(2,'0')}` : '';
+      out.push({ banco:'Patagonia', nro:'', fecha, importe, interes, iva, percep, sellos, comision, nota:'', empresa:'Spotsline' });
+    }
+    return out;
+  }
+  function parsePatagoniaResumenGastos(text, filename){
+    const HEADERS = new Set(['FECHA','CONCEPTO','REFER.','DEBITOS','CREDITOS','SALDO']);
+    const re = /(\d{1,2}\/\d{2}\/\d{2})\s+([A-ZÁÉÍÓÚÑ0-9\.\/\-\s]+?)\s+(-?[\d]{1,3}(?:\.\d{3})*,\d{2})/g;
+    let m;
+    const rows = [];
+    while((m = re.exec(text))){
+      const concept = m[2].trim();
+      if(!concept || concept.length<2 || HEADERS.has(concept)) continue;
+      const dm = m[1].match(/(\d{1,2})\/(\d{2})\/(\d{2})/);
+      const fecha = dm ? `20${dm[3]}-${dm[2]}-${dm[1].padStart(2,'0')}` : '';
+      rows.push({ fecha, concept, amount: parseAR(m[3]) });
+    }
+    const excludedIdx = new Set();
+    for(let i=0;i<rows.length;i++){
+      if(rows[i].concept === 'DESCUENTO DE ECHEQ'){
+        for(let j=i; j<Math.min(i+10, rows.length); j++) excludedIdx.add(j);
+      }
+    }
+    const out = [];
+    for(let i=0;i<rows.length;i++){
+      if(excludedIdx.has(i)){
+        out.push({ id:uid(), banco:'Patagonia', empresa:'Spotsline', fecha:rows[i].fecha, concepto:rows[i].concept, importe:rows[i].amount, categoria:'Descuento de cheques (ya contado en Operaciones)', cost:false, exclude:true });
+        continue;
+      }
+      const { cat, cost, exclude } = categorizeMovement(rows[i].concept, '', 'patagonia');
+      out.push({ id:uid(), banco:'Patagonia', empresa:'Spotsline', fecha:rows[i].fecha, concepto:rows[i].concept, importe:rows[i].amount, categoria:cat, cost:!!cost, exclude:!!exclude });
+    }
+    return out;
+  }
+
+  function detectBankFromText(text){
+    if(/BANCOPATAGONIA|ECHEQs Descuento/i.test(text)) return 'Patagonia';
+    if(/Galicia/i.test(text) && /Comprobante final/i.test(text)) return 'Galicia';
+    if(/Banco\s*Provincia/i.test(text)) return 'Provincia';
+    return null;
+  }
+  async function processOpsFile(file){
+    const ext = file.name.split('.').pop().toLowerCase();
+    try{
+      if(ext === 'pdf'){
+        if(typeof pdfjsLib === 'undefined'){
+          return {ok:false, msg:`No se pudo cargar el lector de PDF (revisá tu conexión y volvé a intentar). "${file.name}" no se procesó.`};
+        }
+        const text = await fileToText(file);
+        const bank = detectBankFromText(text);
+        let found = [];
+        if(bank === 'Galicia') found = parseGalicia(text);
+        else if(bank === 'Patagonia') found = parsePatagonia(text);
+        else if(bank === 'Provincia') found = parseProvincia(text);
+        if(found.length === 0){
+          const detected = bank ? `banco detectado: ${bank}, pero no pude leer los importes` : 'no reconocí el banco';
+          return {ok:false, msg:`"${file.name}": ${detected}. Cargala a mano abajo.`};
+        }
+        for(const o of found){ await addOp(o); }
+        return {ok:true, msg:`${file.name}: se agregaron ${found.length} operación(es) de ${found[0].banco}.`};
+      } else {
+        const {aoa, sheetName} = await fileToSheetInfo(file);
+        let found = [], label = '';
+        if(sheetName === 'Movimientos'){
+          found = parseGaliciaMovimientosVenta(aoa); label = 'Galicia';
+          if(found.length === 0){ found = parseMovimientosVenta(aoa, file.name); label = found[0]?found[0].banco:''; }
+        }
+        if(found.length === 0){ found = parseProvinciaMovimientosXls(aoa); label = 'Provincia'; }
+        if(found.length === 0){ found = parseCredicoopSheet(aoa); label = 'Credicoop'; }
+        if(found.length === 0) return {ok:false, msg:`No encontré filas de interés en "${file.name}" (probé formato Galicia, Provincia, Patagonia y Credicoop).`};
+        for(const o of found){ await addOp(o); }
+        return {ok:true, msg:`${file.name}: se agregaron ${found.length} operación(es) de ${label}.`};
+      }
+    }catch(e){ return {ok:false, msg:`Error leyendo "${file.name}": ${e.message}`}; }
+  }
+  function detectDiario(diario){
+    if(!diario) return 'Sin banco';
+    const d = diario.toUpperCase();
+    if(d.includes('PATAGONIA')) return 'Patagonia';
+    if(d.includes('GALICIA')) return 'Galicia';
+    if(d.includes('CREDICOOP')) return 'Credicoop';
+    if(d.includes('PROVINCIA')) return 'Provincia';
+    return 'Otro';
+  }
+  async function processCarteraFile(file){
+    try{
+      const aoa = await fileToSheet(file);
+      if(aoa.length < 2) return {ok:false, msg:'El archivo está vacío.'};
+      const header = aoa[0].map(h=>String(h).trim());
+      const idx = {
+        cliente: header.indexOf('Cliente/Proveedor'), cuit: header.indexOf('CUIT del Emisor'),
+        diario: header.indexOf('Diario Actual'), fecha: header.indexOf('Fecha'),
+        fechaPago: header.indexOf('Fecha de Pago'), importe: header.indexOf('Importe'),
+        memo: header.indexOf('Memo'), numero: header.indexOf('Número')
+      };
+      if(idx.fechaPago === -1 || idx.importe === -1) return {ok:false, msg:`"${file.name}" no tiene el formato esperado.`};
+      const existingKeys = new Set(cartera.map(c => c.numero+'|'+c.importe+'|'+c.fechaPago));
+      let added = 0;
+      for(let i=1;i<aoa.length;i++){
+        const row = aoa[i];
+        if(!row || row.length===0) continue;
+        const numero = idx.numero>-1? String(row[idx.numero]||'') : '';
+        const importe = idx.importe>-1? parseAR(row[idx.importe]) : 0;
+        const fechaPago = idx.fechaPago>-1? String(row[idx.fechaPago]||'').slice(0,10) : '';
+        if(!fechaPago && !importe) continue;
+        const key = numero+'|'+importe+'|'+fechaPago;
+        if(existingKeys.has(key)) continue;
+        const c = { id: uid(), cliente: idx.cliente>-1? String(row[idx.cliente]||'') : '',
+          cuit: idx.cuit>-1? String(row[idx.cuit]||'') : '',
+          banco: detectDiario(idx.diario>-1? String(row[idx.diario]||'') : ''),
+          fecha: idx.fecha>-1? String(row[idx.fecha]||'').slice(0,10) : '',
+          fechaPago, importe, memo: idx.memo>-1? String(row[idx.memo]||'') : '', numero };
+        await storeChk(c); cartera.push(c); existingKeys.add(key); added++;
+      }
+      return {ok:true, msg:`"${file.name}": se agregaron ${added} cheque(s) a la cartera (se omitieron duplicados).`};
+    }catch(e){ return {ok:false, msg:`Error leyendo "${file.name}": ${e.message}`}; }
+  }
+
+  // ---------- filtering helpers ----------
+  function filteredOps(){
+    return ops.filter(o =>
+      (!filters.bank || o.banco===filters.bank) &&
+      (!filters.month || monthKey(o.fecha)===filters.month) &&
+      (!filters.empresa || (o.empresa||'Spotsline')===filters.empresa) &&
+      (!filters.search || (o.nro||'').toLowerCase().includes(filters.search) || (o.nota||'').toLowerCase().includes(filters.search))
+    );
+  }
+  function filteredCartera(){
+    return cartera.filter(c =>
+      (!filters.bank || c.banco===filters.bank) &&
+      (!filters.month || monthKey(c.fechaPago)===filters.month) &&
+      (!filters.empresa || (c.empresa||'Spotsline')===filters.empresa)
+    );
+  }
+  function filteredGastos(){
+    return gastos.filter(g =>
+      (!filters.bank || g.banco===filters.bank) &&
+      (!filters.month || monthKey(g.fecha)===filters.month) &&
+      (!filters.empresa || g.empresa===filters.empresa)
+    );
+  }
+
+  // ---------- top-level render: header, hero, bank cards, month select ----------
+  function renderTop(){
+    const fo = filteredOps(), fc = filteredCartera(), fg = filteredGastos();
+    const totalInteres = fo.reduce((s,o)=>s+(Number(o.interes)||0),0);
+    const totalCostoCheques = fo.reduce((s,o)=>s+costoTotal(o),0);
+    const totalVendido = fo.reduce((s,o)=>s+(Number(o.importe)||0),0);
+    const pctPerdida = totalVendido>0 ? (totalCostoCheques/totalVendido*100) : 0;
+    const totalCostoGastos = fg.filter(g=>g.cost && !g.exclude).reduce((s,g)=>s+(Number(g.importe)||0),0);
+
+    document.getElementById('topbar-sub').textContent = `${ops.length} operaciones · ${cartera.length} cheques en cartera · ${gastos.length} mov. bancarios`;
+
+    document.getElementById('concept-cheques-num').textContent = money(totalCostoCheques);
+    document.getElementById('concept-cheques-sub').textContent =
+      `${fo.length} cheque(s) vendido(s) por ${money(totalVendido)} · pérdida ${pctPerdida.toFixed(2)}%`;
+    document.getElementById('concept-gastos-num').textContent = money(totalCostoGastos);
+    document.getElementById('concept-gastos-sub').textContent =
+      `${fg.filter(g=>g.cost && !g.exclude).length} movimiento(s) de costo cargados`;
+
+    document.getElementById('concept-cheques').classList.toggle('active', filters.concepto==='cheques');
+    document.getElementById('concept-gastos').classList.toggle('active', filters.concepto==='gastos');
+
+    // ---- bank cards (nivel 2): cheques o gastos según el concepto activo ----
+    // (respeta mes/empresa, pero no el propio filtro de banco, para poder ver todas las opciones)
+    const opsME = ops.filter(o => (!filters.month || monthKey(o.fecha)===filters.month) && (!filters.empresa || (o.empresa||'Spotsline')===filters.empresa));
+    const carteraME = cartera.filter(c => (!filters.month || monthKey(c.fechaPago)===filters.month) && (!filters.empresa || (c.empresa||'Spotsline')===filters.empresa));
+    const gastosME = gastos.filter(g => (!filters.month || monthKey(g.fecha)===filters.month) && (!filters.empresa || g.empresa===filters.empresa));
+
+    const cardsWrap = document.getElementById('bank-cards');
+    const drillLabel = document.getElementById('drill-label');
+    if(filters.concepto==='gastos'){
+      drillLabel.textContent = 'BANCOS — TOCÁ UNO PARA DESGLOSAR LOS GASTOS BANCARIOS';
+      cardsWrap.innerHTML = ALL_BANKS.map(b=>{
+        const bG = gastosME.filter(g=>g.banco===b && g.cost && !g.exclude);
+        const costo = bG.reduce((s,g)=>s+g.importe,0);
+        const sinDatos = bG.length===0;
+        const color = bankColor[b]||'#8b93a1';
+        const active = filters.bank===b;
+        return `<div class="bank-card${active?' active':''}${sinDatos?' empty':''}" style="--card-color:${color}" data-bank="${b}">
+          <div class="label">${b} — costo bancario</div>
+          <div class="num">${money(costo)}</div>
+          <div class="sub">${sinDatos? 'sin extracto cargado este período' : `${bG.length} movimiento(s) de costo`}</div>
+          <div class="hint">${active?'✓ filtrando · tocá para quitar':'clic para filtrar'}</div>
+        </div>`;
+      }).join('');
+    } else {
+      drillLabel.textContent = 'BANCOS — TOCÁ UNO PARA FILTRAR TODO EL PANEL';
+      cardsWrap.innerHTML = ALL_BANKS.map(b=>{
+        const bOps = opsME.filter(o=>o.banco===b);
+        const interes = bOps.reduce((s,o)=>s+(Number(o.interes)||0),0);
+        const costo = bOps.reduce((s,o)=>s+costoTotal(o),0);
+        const importe = bOps.reduce((s,o)=>s+(Number(o.importe)||0),0);
+        const sinDatos = bOps.length===0;
+        const sinImporte = !sinDatos && importe===0 && interes>0;
+        const tasaB = importe>0 ? (interes/importe*100) : 0;
+        const color = bankColor[b]||'#8b93a1';
+        const active = filters.bank===b;
+        return `<div class="bank-card${active?' active':''}${sinDatos?' empty':''}" style="--card-color:${color}" data-bank="${b}">
+          <div class="label">${b} — ${sinImporte?'interés':'vendido'}</div>
+          <div class="num">${sinImporte? money(interes) : money(importe)}</div>
+          <div class="sub">${sinDatos? 'sin comprobantes cargados este período' : sinImporte? 'el extracto no trae el monto vendido, solo el costo' : `interés ${money(interes)} · tasa prom. ${tasaB.toFixed(2)}%`}</div>
+          <div class="hint">${active?'✓ filtrando · tocá para quitar':'clic para filtrar'}</div>
+        </div>`;
+      }).join('');
+    }
+    cardsWrap.querySelectorAll('.bank-card').forEach(card=>{
+      card.addEventListener('click', ()=>{
+        filters.bank = filters.bank===card.dataset.bank? null : card.dataset.bank;
+        renderAll();
+        document.querySelector('.tabs').scrollIntoView({behavior:'smooth', block:'start'});
+      });
+    });
+
+    // month select
+    const mesSel = document.getElementById('filter-mes');
+    const cur = mesSel.value;
+    const meses = [...new Set([...ops.map(o=>monthKey(o.fecha)), ...cartera.map(c=>monthKey(c.fechaPago)), ...gastos.map(g=>monthKey(g.fecha))])].filter(m=>m!=='sin-fecha').sort();
+    mesSel.innerHTML = '<option value="">Todos los meses</option>' + meses.map(m=>`<option value="${m}">${monthLabel(m)}</option>`).join('');
+    mesSel.value = filters.month || '';
+  }
+
+  // ---------- render: ops tab ----------
+  function renderOps(){
+    const filtered = filteredOps();
+    const byBank = {};
+    let totalInteres=0, totalCosto=0, totalImporte=0, interesConImporte=0;
+    for(const o of filtered){
+      byBank[o.banco] = byBank[o.banco]||{interes:0,costo:0,importe:0,count:0};
+      byBank[o.banco].interes += Number(o.interes)||0;
+      byBank[o.banco].costo += costoTotal(o);
+      byBank[o.banco].importe += Number(o.importe)||0;
+      byBank[o.banco].count += 1;
+      totalInteres += Number(o.interes)||0;
+      totalCosto += costoTotal(o);
+      totalImporte += Number(o.importe)||0;
+      if(Number(o.importe)>0) interesConImporte += Number(o.interes)||0;
+    }
+    const tasaProm = totalImporte>0 ? (interesConImporte/totalImporte*100) : 0;
+    const summary = document.getElementById('summary-ops');
+    if(filtered.length===0){
+      summary.innerHTML = '<div class="empty-state">No hay operaciones para este filtro.</div>';
+    } else {
+      let html = '';
+      for(const b of Object.keys(byBank).sort()){
+        const d = byBank[b];
+        const sinImporte = d.importe===0 && d.interes>0;
+        const tasaB = d.importe>0 ? (d.interes/d.importe*100) : 0;
+        html += `<div class="card">
+          <div class="bank">${b} — ${d.count} op.</div>
+          <div class="num" style="color:${bankColor[b]}">${sinImporte? money(d.interes) : money(d.importe)}</div>
+          <div class="sub" style="margin-top:6px;color:var(--text-dim);font-size:11px;">${sinImporte? 'interés (sin monto de venta en el extracto)' : `interés ${money(d.interes)} · tasa prom. ${tasaB.toFixed(2)}%`}</div>
+        </div>`;
+      }
+      html += `<div class="card total"><div class="bank">Monto total vendido</div><div class="num">${money(totalImporte)}</div><div class="sub" style="margin-top:6px;color:var(--text-dim);font-size:11px;">${filtered.length} operación(es)</div></div>`;
+      html += `<div class="card total"><div class="bank">Tasa promedio (interés/vendido)</div><div class="num">${tasaProm.toFixed(2)}%</div></div>`;
+      html += `<div class="card total"><div class="bank">Total interés</div><div class="num">${money(totalInteres)}</div></div>`;
+      html += `<div class="card total"><div class="bank">Total costo financiero</div><div class="num">${money(totalCosto)}</div></div>`;
+      summary.innerHTML = html;
+    }
+    const wrap = document.getElementById('table-ops');
+    if(filtered.length===0){
+      wrap.innerHTML = '<div class="empty-state">Subí un comprobante o cargá una operación a mano.</div>';
+      return;
+    }
+    const rows = filtered.slice().reverse().map(o=>`
+      <tr>
+        <td>${tag(o.banco)}</td>
+        <td>${o.fecha||'—'}</td>
+        <td>${o.nro||'—'}</td>
+        <td class="num">${money(o.importe)}</td>
+        <td class="num">${money(o.interes)}</td>
+        <td class="num">${money(costoTotal(o))}</td>
+        <td>${o.nota?`<span class="note">${o.nota}</span>`:''}</td>
+        <td><button class="link" data-id="${o.id}">borrar</button></td>
+      </tr>`).join('');
+    wrap.innerHTML = `<table><thead><tr>
+      <th>Banco</th><th>Fecha</th><th>N° op.</th><th class="num">Importe</th>
+      <th class="num">Interés</th><th class="num">Costo fin.</th><th></th><th></th>
+    </tr></thead><tbody>${rows}</tbody></table>`;
+    wrap.querySelectorAll('button.link').forEach(btn=>{
+      btn.addEventListener('click', async ()=>{
+        const id = btn.dataset.id;
+        ops = ops.filter(o=>o.id!==id);
+        await deleteOp(id);
+        renderAll();
+      });
+    });
+  }
+
+  // ---------- render: cartera tab ----------
+  function renderCartera(){
+    const filtered = filteredCartera();
+    const byBank = {};
+    let total=0;
+    for(const c of filtered){
+      byBank[c.banco] = byBank[c.banco]||{importe:0,count:0};
+      byBank[c.banco].importe += Number(c.importe)||0;
+      byBank[c.banco].count += 1;
+      total += Number(c.importe)||0;
+    }
+    const summary = document.getElementById('summary-cartera');
+    if(filtered.length===0){
+      summary.innerHTML = '<div class="empty-state">No hay cheques en cartera para este filtro.</div>';
+    } else {
+      let html = '';
+      for(const b of Object.keys(byBank).sort()){
+        html += `<div class="card"><div class="bank">${b} — ${byBank[b].count} cheque(s)</div><div class="num" style="color:${bankColor[b]}">${money(byBank[b].importe)}</div></div>`;
+      }
+      html += `<div class="card total"><div class="bank">Total en cartera (${filtered.length})</div><div class="num">${money(total)}</div></div>`;
+      summary.innerHTML = html;
+    }
+    const wrap = document.getElementById('table-cartera');
+    if(filtered.length===0){
+      wrap.innerHTML = '<div class="empty-state">Subí el Excel de cheques en cartera.</div>';
+      return;
+    }
+    const rows = filtered.slice().reverse().map(c=>`
+      <tr>
+        <td>${tag(c.banco)}</td>
+        <td>${c.cliente||'—'}</td>
+        <td>${c.numero||'—'}</td>
+        <td>${c.fechaPago||'—'}</td>
+        <td class="num">${money(c.importe)}</td>
+        <td><button class="link" data-id="${c.id}">borrar</button></td>
+      </tr>`).join('');
+    wrap.innerHTML = `<table><thead><tr>
+      <th>Banco</th><th>Librador</th><th>N° cheque</th><th>Vto. pago</th><th class="num">Importe</th><th></th>
+    </tr></thead><tbody>${rows}</tbody></table>`;
+    wrap.querySelectorAll('button.link').forEach(btn=>{
+      btn.addEventListener('click', async ()=>{
+        const id = btn.dataset.id;
+        cartera = cartera.filter(c=>c.id!==id);
+        await deleteChk(id);
+        renderAll();
+      });
+    });
+  }
+
+  // ---------- render: gastos bancarios tab ----------
+  const gastoCatColor = {
+    'Interés por descubierto':'#ef4444', 'Comisiones':'#f0c419', 'Sellos':'#4d8dff',
+    'IVA':'#a78bfa', 'IIBB / Percepciones':'#fb923c', 'Impuesto Ley 25413':'#22c55e'
+  };
+  let activeCategoria = null;
+  function renderGastos(){
+    const filtered = filteredGastos().filter(g => !activeCategoria || g.categoria===activeCategoria);
+    const costRows = filtered.filter(g=>g.cost && !g.exclude);
+
+    // resumen por categoria
+    const byCat = {};
+    for(const g of filteredGastos()){
+      if(!g.cost || g.exclude) continue;
+      byCat[g.categoria] = (byCat[g.categoria]||0) + g.importe;
+    }
+    const catWrap = document.getElementById('summary-gastos');
+    const catKeys = Object.keys(byCat);
+    if(catKeys.length===0){
+      catWrap.innerHTML = '<div class="empty-state">Subí un extracto de cuenta para ver el desglose.</div>';
+    } else {
+      const total = Object.values(byCat).reduce((a,b)=>a+b,0);
+      let html = catKeys.sort((a,b)=>byCat[b]-byCat[a]).map(cat=>{
+        const active = activeCategoria===cat;
+        const color = gastoCatColor[cat]||'#8b93a1';
+        return `<div class="card${active?' total':''}" style="cursor:pointer;${active?`border-color:${color}`:''}" data-cat="${cat}">
+          <div class="bank" style="color:${active?color:'var(--text-dim)'}">${cat}</div>
+          <div class="num" style="color:${color}">${money(byCat[cat])}</div>
+          <div class="sub" style="margin-top:6px;color:var(--text-dim);font-size:11px;">${active?'✓ filtrando · tocá para quitar':'tocá para desglosar'}</div>
+        </div>`;
+      }).join('');
+      html += `<div class="card total"><div class="bank">Total costo bancario</div><div class="num">${money(total)}</div></div>`;
+      catWrap.innerHTML = html;
+      catWrap.querySelectorAll('.card[data-cat]').forEach(card=>{
+        card.addEventListener('click', ()=>{
+          activeCategoria = activeCategoria===card.dataset.cat? null : card.dataset.cat;
+          renderGastos();
+        });
+      });
+    }
+
+    // resumen por banco + empresa
+    const byBank = {};
+    for(const g of filtered){
+      if(!g.cost || g.exclude) continue;
+      const key = g.banco+' · '+g.empresa;
+      byBank[key] = (byBank[key]||0) + g.importe;
+    }
+    const bankWrap = document.getElementById('summary-gastos-banco');
+    const bankKeys = Object.keys(byBank);
+    bankWrap.innerHTML = bankKeys.length===0
+      ? '<div class="empty-state">Sin datos para este filtro.</div>'
+      : bankKeys.sort((a,b)=>byBank[b]-byBank[a]).map(k=>`<div class="card"><div class="bank">${k}</div><div class="num">${money(byBank[k])}</div></div>`).join('');
+
+    // tabla
+    const wrap = document.getElementById('table-gastos');
+    if(costRows.length===0){
+      wrap.innerHTML = '<div class="empty-state">Subí un extracto de cuenta (Excel) para ver los movimientos.</div>';
+      return;
+    }
+    const rows = costRows.slice().reverse().slice(0,300).map(g=>`
+      <tr>
+        <td>${tag(g.banco)}</td>
+        <td>${g.empresa}</td>
+        <td>${g.fecha||'—'}</td>
+        <td><span class="note">${g.concepto}</span></td>
+        <td>${g.categoria}</td>
+        <td class="num">${money(g.importe)}</td>
+        <td><button class="link" data-id="${g.id}">borrar</button></td>
+      </tr>`).join('');
+    wrap.innerHTML = `<table><thead><tr>
+      <th>Banco</th><th>Empresa</th><th>Fecha</th><th>Concepto</th><th>Categoría</th><th class="num">Importe</th><th></th>
+    </tr></thead><tbody>${rows}</tbody></table>` + (costRows.length>300? `<div class="note" style="padding:8px 10px;">Mostrando los primeros 300 de ${costRows.length} movimientos (filtrá por banco/mes para ver el resto).</div>` : '');
+    wrap.querySelectorAll('button.link').forEach(btn=>{
+      btn.addEventListener('click', async ()=>{
+        const id = btn.dataset.id;
+        gastos = gastos.filter(g=>g.id!==id);
+        await deleteGasto(id);
+        renderAll();
+      });
+    });
+  }
+
+  // ---------- render: indicadores tab ----------
+  function renderIndicadores(){
+    const fo = filteredOps(), fc = filteredCartera();
+    const ingresadoCount = fc.length, ingresadoImporte = fc.reduce((s,c)=>s+(Number(c.importe)||0),0);
+    const vendidoCount = fo.length, vendidoImporte = fo.reduce((s,o)=>s+(Number(o.importe)||0),0);
+    const perdida = fo.reduce((s,o)=>s+costoTotal(o),0);
+    const neto = vendidoImporte - perdida;
+    const tasaPct = vendidoImporte>0 ? (perdida/vendidoImporte*100) : 0;
+    const quedanCount = Math.max(ingresadoCount - vendidoCount, 0);
+    const quedanImporte = ingresadoImporte - vendidoImporte;
+
+    const summary = document.getElementById('summary-indic');
+    summary.innerHTML = `
+      <div class="card"><div class="bank">Cheques ingresados en cartera</div><div class="num">${ingresadoCount}</div><div class="sub" style="margin-top:6px;color:var(--text-dim);font-size:11px;">${money(ingresadoImporte)}</div></div>
+      <div class="card"><div class="bank">Cheques vendidos (descontados)</div><div class="num">${vendidoCount}</div><div class="sub" style="margin-top:6px;color:var(--text-dim);font-size:11px;">${money(vendidoImporte)}</div></div>
+      <div class="card loss"><div class="bank">Pérdida (costo financiero)</div><div class="num">${money(perdida)}</div><div class="sub" style="margin-top:6px;color:var(--text-dim);font-size:11px;">${tasaPct.toFixed(1)}% de lo vendido</div></div>
+      <div class="card net"><div class="bank">Neto de lo vendido — a otros pagos</div><div class="num">${money(neto)}</div><div class="sub" style="margin-top:6px;color:var(--text-dim);font-size:11px;">vendido − pérdida</div></div>
+    `;
+
+    const wrapDisp = document.getElementById('summary-disponible');
+    wrapDisp.innerHTML = `
+      <div class="card"><div class="bank">En cartera (sin vender)</div><div class="num">${ingresadoCount} cheque(s)</div><div class="sub" style="margin-top:6px;color:var(--text-dim);font-size:11px;">${money(ingresadoImporte)}</div></div>
+      <div class="card"><div class="bank">De esos, vendiste</div><div class="num">${vendidoCount} cheque(s)</div><div class="sub" style="margin-top:6px;color:var(--text-dim);font-size:11px;">${money(vendidoImporte)}</div></div>
+      <div class="card net"><div class="bank">Te quedan disponibles para otros pagos</div><div class="num">${quedanCount} cheque(s)</div><div class="sub" style="margin-top:6px;color:var(--text-dim);font-size:11px;">${money(quedanImporte)}</div></div>
+    `;
+
+    // ---- indicador de gastos bancarios ----
+    const fg = filteredGastos().filter(g=>g.cost && !g.exclude);
+    const gastosByCat = {};
+    for(const g of fg) gastosByCat[g.categoria] = (gastosByCat[g.categoria]||0) + g.importe;
+    const totalGastos = Object.values(gastosByCat).reduce((a,b)=>a+b,0);
+    const costoCombinado = perdida + totalGastos;
+    const wrapGastos = document.getElementById('summary-indic-gastos');
+    if(fg.length===0){
+      wrapGastos.innerHTML = '<div class="empty-state">Todavía no subiste extractos de cuenta a Gastos bancarios.</div>';
+    } else {
+      let html = '';
+      const topCats = Object.keys(gastosByCat).sort((a,b)=>gastosByCat[b]-gastosByCat[a]);
+      for(const cat of topCats){
+        html += `<div class="card"><div class="bank">${cat}</div><div class="num" style="color:${gastoCatColor[cat]||'var(--text)'}">${money(gastosByCat[cat])}</div></div>`;
+      }
+      html += `<div class="card total"><div class="bank">Total gastos bancarios</div><div class="num">${money(totalGastos)}</div></div>`;
+      html += `<div class="card loss"><div class="bank">Costo combinado (cheques + bancario)</div><div class="num">${money(costoCombinado)}</div></div>`;
+      wrapGastos.innerHTML = html;
+    }
+
+    const banks = [...new Set(fo.map(o=>o.banco))].sort();
+    const barsWrap = document.getElementById('indic-bars');
+    if(banks.length===0){
+      barsWrap.innerHTML = '<div class="empty-state">No hay operaciones para este filtro.</div>';
+      return;
+    }
+    barsWrap.innerHTML = banks.map(b=>{
+      const bOps = fo.filter(o=>o.banco===b);
+      const bruto = bOps.reduce((s,o)=>s+(Number(o.importe)||0),0);
+      const costo = bOps.reduce((s,o)=>s+costoTotal(o),0);
+      const netoB = bruto - costo;
+      const pctCosto = bruto>0? (costo/bruto*100) : 0;
+      const pctNeto = 100 - pctCosto;
+      return `<div class="indic-bank-row">
+        <div class="head"><span class="name">${b}</span><span>${money(bruto)} vendido — pérdida ${pctCosto.toFixed(1)}%</span></div>
+        <div class="bar-track">
+          <div class="bar-seg" style="width:${pctNeto}%;background:var(--green)"></div>
+          <div class="bar-seg" style="width:${pctCosto}%;background:var(--red)"></div>
+        </div>
+      </div>`;
+    }).join('');
+  }
+
+  function renderAll(){
+    renderTop();
+    renderOps();
+    renderCartera();
+    renderGastos();
+    renderIndicadores();
+  }
+
+  // ---------- events ----------
+  function switchTab(tabName){
+    document.querySelectorAll('.tab-btn').forEach(b=>b.classList.toggle('active', b.dataset.tab===tabName));
+    document.querySelectorAll('.tab-panel').forEach(p=>p.classList.toggle('active', p.id==='tab-'+tabName));
+  }
+  document.querySelectorAll('.tab-btn').forEach(btn=>{
+    btn.addEventListener('click', ()=> switchTab(btn.dataset.tab));
+  });
+
+  document.getElementById('concept-cheques').addEventListener('click', ()=>{
+    filters.concepto = filters.concepto==='cheques' ? null : 'cheques';
+    filters.bank = null;
+    renderAll();
+    switchTab('ops');
+    document.querySelector('.tabs').scrollIntoView({behavior:'smooth', block:'start'});
+  });
+  document.getElementById('concept-gastos').addEventListener('click', ()=>{
+    filters.concepto = filters.concepto==='gastos' ? null : 'gastos';
+    filters.bank = null;
+    renderAll();
+    switchTab('gastos');
+    document.querySelector('.tabs').scrollIntoView({behavior:'smooth', block:'start'});
+  });
+
+  document.getElementById('filter-mes').addEventListener('change', (e)=>{ filters.month = e.target.value; renderAll(); });
+  document.getElementById('filter-empresa').addEventListener('change', (e)=>{ filters.empresa = e.target.value; renderAll(); });
+  document.getElementById('search-box').addEventListener('input', (e)=>{ filters.search = e.target.value.toLowerCase(); renderOps(); });
+  document.getElementById('btn-clear-filters').addEventListener('click', ()=>{
+    filters = { bank:null, month:'', search:'', empresa:'', concepto:null };
+    document.getElementById('search-box').value = '';
+    document.getElementById('filter-empresa').value = '';
+    renderAll();
+  });
+  document.getElementById('btn-refresh').addEventListener('click', async ()=>{
+    await loadOps(); await loadCartera(); await loadGastos(); await loadUploadedFiles(); renderAll();
+  });
+
+  document.getElementById('btn-add').addEventListener('click', async ()=>{
+    const fecha = document.getElementById('f-fecha').value;
+    const interes = document.getElementById('f-interes').value;
+    if(!fecha || interes===''){ alert('Cargá al menos la fecha y el interés.'); return; }
+    const op = {
+      id: uid(), banco: document.getElementById('f-banco').value,
+      empresa: document.getElementById('f-empresa').value,
+      fecha, nro: document.getElementById('f-nro').value,
+      importe: parseFloat(document.getElementById('f-importe').value)||0,
+      interes: parseFloat(interes)||0,
+      iva: parseFloat(document.getElementById('f-iva').value)||0,
+      percep: parseFloat(document.getElementById('f-percep').value)||0,
+      sellos: parseFloat(document.getElementById('f-sellos').value)||0,
+      comision: parseFloat(document.getElementById('f-comision').value)||0,
+      nota: document.getElementById('f-nota').value
+    };
+    await storeOp(op);
+    ops.push(op);
+    ['f-nro','f-importe','f-interes','f-iva','f-percep','f-sellos','f-comision','f-nota'].forEach(id=>document.getElementById(id).value='');
+    renderAll();
+  });
+
+  document.getElementById('btn-reset-ops').addEventListener('click', async ()=>{
+    if(!confirm('Esto borra todas las operaciones cargadas. ¿Seguro?')) return;
+    for(const o of ops) await deleteOp(o.id);
+    ops = [];
+    uploadedFiles = new Set(); await window.storage.delete('meta:uploaded_files', true).catch(()=>{});
+    renderAll();
+  });
+  document.getElementById('btn-reset-cartera').addEventListener('click', async ()=>{
+    if(!confirm('Esto vacía la cartera de cheques. ¿Seguro?')) return;
+    for(const c of cartera) await deleteChk(c.id);
+    cartera = [];
+    uploadedFiles = new Set(); await window.storage.delete('meta:uploaded_files', true).catch(()=>{});
+    renderAll();
+  });
+  document.getElementById('btn-reset-gastos').addEventListener('click', async ()=>{
+    if(!confirm('Esto borra todos los extractos de gastos bancarios cargados. ¿Seguro?')) return;
+    for(const g of gastos) await deleteGasto(g.id);
+    gastos = [];
+    uploadedFiles = new Set(); await window.storage.delete('meta:uploaded_files', true).catch(()=>{});
+    renderAll();
+  });
+
+  function wireUpload(zoneId, inputId, btnId, statusId, handler){
+    const zone = document.getElementById(zoneId);
+    const input = document.getElementById(inputId);
+    const btn = document.getElementById(btnId);
+    const status = document.getElementById(statusId);
+    btn.addEventListener('click', ()=> input.click());
+    input.addEventListener('change', async (e)=>{ await handler([...e.target.files], status); input.value=''; });
+    ['dragenter','dragover'].forEach(ev=> zone.addEventListener(ev, e=>{ e.preventDefault(); zone.classList.add('drag'); }));
+    ['dragleave','drop'].forEach(ev=> zone.addEventListener(ev, e=>{ e.preventDefault(); zone.classList.remove('drag'); }));
+    zone.addEventListener('drop', async (e)=>{ const files=[...e.dataTransfer.files]; if(files.length) await handler(files, status); });
+  }
+
+  wireUpload('drop-global','file-global','btn-pick-global','status-global', async (files, status)=>{
+    status.textContent = 'Procesando…'; status.className='upload-status';
+    const msgs = [];
+    let anyOk = false;
+    for(const f of files){
+      const results = await processAnyFile(f);
+      for(const r of results){ msgs.push(r.msg); if(r.ok) anyOk = true; }
+    }
+    status.className = 'upload-status ' + (anyOk?'ok':'err');
+    status.textContent = msgs.join(' ');
+    renderAll();
+  });
+
+  (async function(){ await loadOps(); await loadCartera(); await loadGastos(); await loadUploadedFiles(); renderAll(); })();
+})();
+</script>
