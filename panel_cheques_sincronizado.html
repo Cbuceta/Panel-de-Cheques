@@ -661,10 +661,11 @@
 
   async function loadOps(){
     await ensureFullDataLoaded();
-    if(ops.length===0){
-      ops = seedOps();
-      scheduleSyncSupabase();
-    }
+    // Limpieza defensiva: si en algún momento se guardaron datos de ejemplo
+    // (ids que empiezan con "seed"), se descartan para no mezclarlos con lo real.
+    const teniaEjemplos = ops.some(o=>String(o.id).startsWith('seed'));
+    ops = ops.filter(o=>!String(o.id).startsWith('seed'));
+    if(teniaEjemplos) scheduleSyncSupabase();
     ops.sort((a,b)=>(a.fecha||'').localeCompare(b.fecha||''));
   }
   async function loadCartera(){
