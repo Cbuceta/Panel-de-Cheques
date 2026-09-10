@@ -654,7 +654,7 @@
     return `<span class="bank-tag" style="background:${c}22;color:${c}">${banco}</span>`;
   }
 
-  // ---------- storage ----------
+  // ---------- storage (Supabase — no window.storage, así funciona igual dentro y fuera de Claude) ----------
   async function storeOp(op){ scheduleSyncSupabase(); return true; }
   async function deleteOp(id){ scheduleSyncSupabase(); }
   async function storeChk(c){ scheduleSyncSupabase(); return true; }
