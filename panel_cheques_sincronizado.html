@@ -233,6 +233,62 @@
   .help-table td{ padding:10px; border:1px solid var(--line); vertical-align:top; }
   .help-table td strong{ color:var(--text); }
   .help-pill{ display:inline-block; background:var(--panel-2); border:1px solid var(--gold); color:var(--gold); border-radius:20px; padding:2px 9px; font-size:11px; margin-bottom:4px; }
+  /* ---------- control de carga ---------- */
+  table.ctl{ width:100%; border-collapse:collapse; font-size:12px; }
+  table.ctl th{ text-align:left; padding:8px 10px; color:var(--text-dim); font-size:11px; text-transform:uppercase; border-bottom:1px solid var(--line); white-space:nowrap; }
+  table.ctl td{ padding:8px 10px; border-bottom:1px solid var(--line); vertical-align:top; min-width:130px; }
+  td.ctl-ok{ border-left:3px solid var(--green); background:rgba(34,197,94,.07); }
+  td.ctl-revisar, td.ctl-solo{ border-left:3px solid var(--orange); background:rgba(245,158,11,.09); }
+  td.ctl-falta{ border-left:3px solid var(--red); background:rgba(239,68,68,.10); color:#fca5a5; font-weight:600; }
+  td.ctl-na{ color:var(--text-dim); opacity:.45; }
+  /* ---------- comparativo ---------- */
+  .comp-head{ display:flex; justify-content:space-between; align-items:flex-start; gap:16px; flex-wrap:wrap; margin-bottom:18px; }
+  .comp-btns{ display:flex; gap:8px; flex-wrap:wrap; }
+  .print-title{ display:none; font-size:16px; margin:0 0 12px; }
+  table.comp{ width:100%; border-collapse:collapse; font-size:12.5px; }
+  table.comp th{ text-align:right; padding:8px 10px; color:var(--text-dim); font-size:11px; text-transform:uppercase; border-bottom:1px solid var(--line); white-space:nowrap; }
+  table.comp th:first-child, table.comp td:first-child{ text-align:left; }
+  table.comp td{ padding:8px 10px; border-bottom:1px solid var(--line); text-align:right; font-variant-numeric:tabular-nums; white-space:nowrap; }
+  table.comp tr.sub td:first-child{ padding-left:26px; color:var(--text-dim); }
+  table.comp tr.tot td{ font-weight:700; border-top:1px solid var(--gold); background:var(--panel); }
+  table.comp tr.grp-h td{ color:var(--gold); font-size:11px; text-transform:uppercase; letter-spacing:.3px; background:var(--panel); }
+  .var-up{ color:var(--red); } .var-down{ color:var(--green); }
+  .barras{ display:flex; gap:18px; align-items:flex-end; flex-wrap:wrap; padding:10px 4px 4px; }
+  .barra{ display:flex; flex-direction:column; align-items:center; gap:6px; min-width:84px; }
+  .barra .col{ display:flex; flex-direction:column; justify-content:flex-end; width:46px; height:150px; border-radius:4px; overflow:hidden; background:var(--panel-2); }
+  .barra .seg-g{ background:var(--blue); } .barra .seg-c{ background:var(--gold); }
+  .barra .tt{ font-size:11px; color:var(--text-dim); text-align:center; }
+  .barras-leyenda{ display:flex; gap:16px; font-size:11px; color:var(--text-dim); margin-top:6px; }
+  .barras-leyenda .dot{ width:8px; height:8px; border-radius:50%; display:inline-block; margin-right:5px; }
+  /* ---------- impresión (Comparativo → PDF) ---------- */
+  @media print{
+    :root{ --bg:#fff; --panel:#fff; --panel-2:#eee; --line:#cfcfcf; --text:#111; --text-dim:#555; --gold:#8a6d00; --blue:#1d4ed8; --green:#15803d; --red:#b91c1c; --orange:#b45309; }
+    #panel{ background:#fff !important; color:#111 !important; }
+    #panel.print-comparativo .topbar, #panel.print-comparativo .banner, #panel.print-comparativo .upload-zone, #panel.print-comparativo .concept-row,
+    #panel.print-comparativo .bank-cards, #panel.print-comparativo .filters-row, #panel.print-comparativo .tabs, #panel.print-comparativo #drill-label,
+    #panel.print-comparativo .no-print, #panel.print-comparativo .section-label[data-noprint] { display:none !important; }
+    #panel.print-comparativo .tab-panel{ display:none !important; }
+    #panel.print-comparativo #tab-comparativo{ display:block !important; }
+    #panel.print-comparativo .print-title{ display:block !important; }
+    table.comp td, table.comp th{ border-color:#ccc; }
+  }
+  /* ---------- tablas agrupadas (lupa) ---------- */
+  button.lupa{ background:var(--panel-2); border:1px solid var(--line); border-radius:4px; padding:2px 8px; cursor:pointer; font-size:13px; color:var(--text); }
+  button.lupa.on{ border-color:var(--gold); background:#2a2410; }
+  tr.grp td{ font-weight:500; }
+  tr.det td{ background:var(--panel); font-size:12px; color:var(--text-dim); border-bottom:1px dashed var(--line); padding-top:6px; padding-bottom:6px; }
+  tr.det td.num{ color:var(--text); }
+  select.mini{ background:var(--panel); border:1px solid var(--line); color:var(--text); padding:3px 8px; border-radius:4px; font-size:11.5px; text-transform:none; letter-spacing:0; }
+  /* ---------- banner de sincronización ---------- */
+  .banner{ margin:0; padding:12px 22px; background:#3a2a0a; border-bottom:1px solid var(--gold); color:var(--text); font-size:13px; }
+  .banner-btns{ display:flex; gap:8px; flex-wrap:wrap; margin-top:10px; }
+  /* ---------- modal de respaldos ---------- */
+  .modal-bg{ position:fixed; inset:0; background:rgba(0,0,0,.6); z-index:50; align-items:center; justify-content:center; padding:20px; }
+  .modal{ background:var(--panel); border:1px solid var(--line); border-radius:8px; padding:22px 24px; width:min(720px,100%); max-height:88vh; overflow:auto; color:var(--text); }
+  .modal h3{ margin:0 0 6px; font-size:16px; }
+  .modal h4{ margin:20px 0 8px; font-size:13px; color:var(--gold); }
+  .modal-row{ display:flex; gap:10px; flex-wrap:wrap; align-items:center; }
+  .resp-item{ display:flex; justify-content:space-between; align-items:center; gap:12px; padding:8px 0; border-bottom:1px solid var(--line); font-size:12.5px; }
 </style>
 
 <div id="panel">
@@ -247,9 +303,12 @@
     <div class="actions">
       <span class="shared-badge" title="Los datos se guardan compartidos: cualquiera con este link ve y modifica lo mismo">🔗 Compartido con tu equipo</span>
       <span class="shared-badge" id="sync-status" style="color:var(--text-dim)"></span>
+      <button class="ghost-btn" id="btn-deshacer" style="display:none;"></button>
+      <button class="ghost-btn" id="btn-respaldos" title="Papelera, respaldo manual y respaldos automáticos">🛟 Respaldos</button>
       <button class="ghost-btn" id="btn-refresh">↻ Actualizar</button>
     </div>
   </div>
+  <div id="banner-sync" class="banner" style="display:none;"></div>
 
   <div class="content">
 
@@ -291,6 +350,8 @@
       <button class="tab-btn" data-tab="cartera">Cheques en cartera</button>
       <button class="tab-btn" data-tab="gastos">Gastos bancarios</button>
       <button class="tab-btn" data-tab="indic">Indicadores</button>
+      <button class="tab-btn" data-tab="comparativo">Comparativo mes a mes</button>
+      <button class="tab-btn" data-tab="control">Control de carga</button>
       <button class="tab-btn" data-tab="ayuda">Ayuda</button>
     </div>
 
@@ -356,7 +417,7 @@
       <div class="section-label">RESUMEN POR BANCO</div>
       <div class="summary-row" id="summary-gastos-banco"><div class="loading">Cargando…</div></div>
 
-      <div class="section-label">MOVIMIENTOS (solo los que cuentan como costo)</div>
+      <div class="section-label">MOVIMIENTOS (solo los que cuentan como costo) — <select id="gastos-modo" class="mini"><option value="dia-cat">agrupados por día y categoría</option><option value="dia">agrupados solo por día</option></select> · tocá 🔍 para ver el detalle</div>
       <div id="table-gastos"><div class="loading">Cargando…</div></div>
       <div style="margin-top:14px;"><button class="ghost-btn" id="btn-reset-gastos">Borrar extractos cargados</button> <button class="ghost-btn" id="btn-sinfecha-gastos" title="Quita solo las filas que quedaron sin fecha por una carga fallida">Quitar filas sin fecha</button></div>
       <div style="margin-top:10px;display:flex;gap:8px;align-items:center;flex-wrap:wrap;"><span class="note">Borrar solo el extracto de un banco (respeta el mes y la empresa del filtro; no toca meses cerrados 🔒):</span> <select id="sel-banco-gastos"></select> <button class="ghost-btn" id="btn-borrar-banco-gastos">Borrar extractos del banco</button></div>
@@ -379,6 +440,33 @@
         <span><span class="dot" style="background:var(--red)"></span>Costo financiero (pérdida)</span>
       </div>
       <div id="indic-bars"><div class="loading">Cargando…</div></div>
+    </div>
+
+    <!-- ===================== TAB: COMPARATIVO ===================== -->
+    <div class="tab-panel" id="tab-comparativo">
+      <div class="comp-head no-print">
+        <p class="note" style="display:block;margin:0;">Compara mes contra mes lo que costó vender cheques y lo que cobraron los bancos. Usa los filtros de <b>empresa</b> y <b>banco</b> de arriba (el filtro de mes no aplica).</p>
+        <div class="comp-btns">
+          <button class="primary" id="btn-comp-excel">⬇ Exportar a Excel</button>
+          <button class="ghost-btn" id="btn-comp-print">🖨 Imprimir / guardar como PDF</button>
+        </div>
+      </div>
+      <h2 class="print-title" id="comp-titulo"></h2>
+      <div class="section-label">COSTO TOTAL POR MES</div>
+      <div id="comp-barras"><div class="loading">Cargando…</div></div>
+      <div class="section-label">DETALLE MENSUAL</div>
+      <div id="comp-tabla"></div>
+      <div class="section-label">POR BANCO (costo total: venta de cheques + gastos bancarios)</div>
+      <div id="comp-bancos"></div>
+    </div>
+
+    <!-- ===================== TAB: CONTROL DE CARGA ===================== -->
+    <div class="tab-panel" id="tab-control">
+      <p class="note" style="display:block;margin-bottom:16px;">Muestra qué banco tiene extracto cargado en cada mes, para detectar qué falta. Un banco se espera desde el primer mes en que tiene datos. Usa el filtro de <b>empresa</b> de arriba.</p>
+      <div class="section-label">RESUMEN</div>
+      <div class="summary-row" id="control-resumen"></div>
+      <div class="section-label">BANCO × MES</div>
+      <div id="control-tabla"></div>
     </div>
 
     <!-- ===================== TAB: AYUDA ===================== -->
@@ -460,11 +548,30 @@
           <li><strong>Cerrar un mes 🔒:</strong> elegí ese mes en el filtro y tocá "Cerrar [mes]" al lado. Un mes cerrado no se puede borrar — ni fila por fila, ni con los botones de "Borrar todo" (esos directamente saltean los meses cerrados). Usalo apenas termines de revisar un mes, para que no se borre por accidente.</li>
         </ul>
 
+        <h2>Lupa: ver lo acumulado del día</h2>
+        <p>En <strong>Operaciones</strong> y en <strong>Gastos bancarios</strong> la tabla no repite cada movimiento: muestra <strong>un renglón por día</strong> (y por banco, y en Gastos también por categoría) con la cantidad y el total acumulado. Tocá el <strong>🔍</strong> de un renglón para ver sus movimientos uno por uno. En Gastos podés elegir arriba de la tabla si agrupar "por día y categoría" o "solo por día".</p>
+        <p>Para borrar no hace falta ir de a uno: el botón <strong>"borrar día"</strong> / <strong>"borrar grupo"</strong> quita todo el renglón de una vez (y se puede deshacer).</p>
+
+        <h2>Comparativo mes a mes</h2>
+        <p>Muestra, mes contra mes: cheques vendidos, importe, costo financiero de la venta, % de pérdida, cada rubro de gastos bancarios, el <strong>costo total</strong> (cheques + bancario) y cuánto varió contra el mes anterior, más un gráfico de barras y el costo por banco. Respeta los filtros de empresa y banco. Con <strong>"Exportar a Excel"</strong> baja un archivo con 4 hojas (comparativo, costo por banco, gastos por categoría y venta de cheques), y con <strong>"Imprimir / guardar como PDF"</strong> imprime solo esa pantalla, lista para llevar a una reunión.</p>
+
+        <h2>Control de carga</h2>
+        <p>Una grilla <strong>banco × mes</strong> que te dice qué extractos cargaste y cuáles faltan: <strong>✓</strong> cargado (con la cantidad de movimientos y el rango de fechas), <strong>✗ falta el extracto</strong>, y <strong>⚠</strong> cuando hay venta de cheques pero no extracto de cuenta, o cuando un mes ya cerrado termina antes del día 25 (puede ser normal si la cuenta casi no se movió, pero conviene revisarlo). A cada banco se le exige desde el primer mes en que tiene datos.</p>
+
+        <h2>Respaldos, deshacer y avisos de la nube</h2>
+        <ul>
+          <li><strong>↩ Deshacer:</strong> arriba aparece el botón cuando borrás algo. Restaura lo último que se borró, sin pisar nada de lo actual. En <strong>🛟 Respaldos</strong> ves la papelera completa (últimos borrados) y podés restaurar cualquiera. La papelera la ve todo el equipo.</li>
+          <li><strong>Respaldo automático:</strong> una vez por día, antes del primer cambio, el panel deja una copia de cómo estaban los datos (se guardan 14 días). Desde <strong>🛟 Respaldos</strong> podés restaurar un día: solo agrega lo que falte, nunca borra ni pisa lo actual.</li>
+          <li><strong>Respaldo manual:</strong> "Descargar respaldo ahora" baja un archivo .json con todo; "Restaurar desde un archivo" lo vuelve a cargar. Conviene bajar uno antes de operaciones grandes.</li>
+          <li><strong>Aviso "No pude cargar los datos del equipo":</strong> si al abrir falla la conexión, el panel <strong>no guarda nada</strong> para no pisar lo que ya hay. Tocá "Reintentar".</li>
+          <li><strong>Aviso "Otra persona guardó cambios":</strong> pasa si dos personas trabajan a la vez. Tus últimos cambios todavía no se guardaron. "Combinar" (recomendado) junta lo tuyo con lo del equipo; "Descartar" te quedás con lo del equipo; "Guardar igual" pisa lo del equipo.</li>
+          <li>El botón <strong>↻ Actualizar</strong> trae los cambios que hicieron los demás.</li>
+        </ul>
+
         <h2>Cosas para tener en cuenta</h2>
         <ul>
           <li>El panel <strong>guarda todo compartido</strong> — cualquiera que abra este mismo link ve y puede modificar los mismos datos (no es una copia personal). Solo funciona así si lo estás viendo adentro de Claude.ai — si descargás el HTML y lo abrís suelto desde Descargas, no se conecta al dato compartido.</li>
-          <li>Como es compartido, si dos personas suben el mismo archivo casi al mismo tiempo, puede que ambas cargas entren igual — el control de "archivo repetido" funciona pero no es instantáneo entre usuarios.</li>
-          <li>Si subís el mismo archivo dos veces, se duplica en Operaciones y Gastos bancarios (Cartera sí filtra duplicados, por número de cheque + importe + fecha).</li>
+          <li>El panel recuerda los archivos que ya subiste (por nombre y tamaño) y no los carga dos veces. Si necesitás volver a subir uno, primero borrá lo de ese banco (ver "Borrar lo de un banco") o cambiale el nombre al archivo.</li>
           <li>Si un banco cambia el formato de su exportación, es probable que el archivo nuevo no entre a la primera. Avisá y se ajusta el detector contra el archivo real.</li>
           <li><strong>Reversas:</strong> las líneas que devuelven un cargo (ej. "REV. IMP.DEBITO", "REVERSA INGRESOS BRUTO", "Dev.imp.deb") se <strong>restan</strong> del costo de su rubro, y aparecen en negativo en la tabla de Gastos bancarios. Los demás créditos (transferencias, acreditación de cheques, etc.) no cuentan como costo.</li>
           <li><strong>Empresa por el nombre del archivo:</strong> si el nombre contiene "SPL" separado por espacio, guion o guion bajo (ej. <code>provincia_SPL.xls</code>, <code>Banco Provincia SPL.xls</code>) se carga como SPL Distribuidora; si no, como Spotsline. Conviene revisarlo en la tabla después de cargar.</li>
@@ -477,6 +584,23 @@
       </div>
     </div>
 
+  </div>
+
+  <div id="modal-resp" class="modal-bg" style="display:none;">
+    <div class="modal">
+      <h3>🛟 Respaldos y papelera</h3>
+      <p class="note" style="display:block;margin:0 0 14px;">Restaurar <b>nunca borra ni pisa</b> lo que hoy está cargado: solo vuelve a agregar lo que falta.</p>
+      <div class="modal-row">
+        <button class="primary" id="btn-resp-descargar">⬇ Descargar respaldo ahora</button>
+        <button class="ghost-btn" id="btn-resp-archivo">⬆ Restaurar desde un archivo…</button>
+        <input type="file" id="file-resp" accept=".json" style="display:none;">
+      </div>
+      <h4>Papelera — lo último que borraste</h4>
+      <div id="lista-papelera"></div>
+      <h4>Respaldos automáticos en la nube <span class="note">(uno por día, se guardan 14)</span></h4>
+      <div id="lista-resp-nube">Buscando…</div>
+      <div class="modal-row" style="justify-content:flex-end;margin-top:16px;"><button class="ghost-btn" id="btn-resp-cerrar">Cerrar</button></div>
+    </div>
   </div>
 </div>
 
@@ -536,70 +660,292 @@
     return out;
   }
 
+  // ---------- guardado en la nube (Supabase) con protecciones ----------
   let syncTimer = null;
-  function scheduleSyncSupabase(){
-    clearTimeout(syncTimer);
-    syncTimer = setTimeout(syncSupabaseNow, 800); // agrupa cambios seguidos en un solo envío
+  let dirty = false;            // hay cambios locales sin guardar
+  let sincronizando = false;
+  let resync = false;
+  let remoteStamp = null;       // updated_at de la versión del equipo que tenemos cargada
+  let cargaRemotaOk = false;    // solo se guarda si la carga inicial funcionó (para no pisar lo del equipo con una lista vacía)
+  let conflictoRemoto = false;  // otra persona guardó cambios mientras tanto
+  let ultimoRespaldoNube = '';  // día (AAAA-MM-DD) del último respaldo automático intentado
+  let papelera = [];            // lo último que se borró (se puede deshacer)
+  const PAPELERA_MAX = 10, PAPELERA_MAX_FILAS = 8000;
+
+  function headersSb(extra){ return Object.assign({ 'apikey': SUPABASE_KEY, 'Authorization': 'Bearer '+SUPABASE_KEY }, extra||{}); }
+  function mismoInstante(a, b){
+    if(!a || !b) return a===b;
+    const x = new Date(a).getTime(), y = new Date(b).getTime();
+    return (!isNaN(x) && !isNaN(y)) ? x===y : a===b;
   }
-  async function syncSupabaseNow(){
-    const statusEl = document.getElementById('sync-status');
-    if(statusEl) statusEl.textContent = '⏳ Sincronizando…';
+  function setEstado(txt){ const el = document.getElementById('sync-status'); if(el) el.textContent = txt; }
+  function mostrarBanner(html){
+    const el = document.getElementById('banner-sync'); if(!el) return;
+    el.innerHTML = html || '';
+    el.style.display = html ? '' : 'none';
+    el.querySelectorAll('[data-acc]').forEach(b=> b.addEventListener('click', ()=> accionBanner(b.dataset.acc)));
+  }
+  function bannerConflicto(){
+    mostrarBanner(`<b>⚠ Otra persona del equipo guardó cambios mientras trabajabas.</b> Tus últimos cambios todavía NO se guardaron. ¿Qué hacemos?
+      <div class="banner-btns">
+        <button class="primary" data-acc="combinar">Combinar con lo del equipo (recomendado)</button>
+        <button class="ghost-btn" data-acc="descartar">Descartar mis cambios y actualizar</button>
+        <button class="ghost-btn" data-acc="pisar">Guardar igual (pisa lo del equipo)</button>
+      </div>`);
+  }
+  function bannerSinCarga(){
+    mostrarBanner(`<b>⚠ No pude cargar los datos del equipo</b> (¿sin conexión?). Mientras tanto <b>no se guarda nada</b>, para no pisar lo que ya hay.
+      <div class="banner-btns"><button class="primary" data-acc="reintentar">Reintentar</button></div>`);
+  }
+  async function accionBanner(acc){
     try{
-      const payload = {
-        resumen: computeChequesSummary(),
-        datos: { ops, cartera, gastos, uploadedFiles: [...uploadedFiles], mesesCerrados: [...mesesCerrados] }
-      };
-      const res = await fetch(`${SUPABASE_URL}/rest/v1/${SUPABASE_TABLE}?on_conflict=id`, {
-        method:'POST',
-        headers:{
-          'apikey': SUPABASE_KEY,
-          'Authorization': 'Bearer '+SUPABASE_KEY,
-          'Content-Type':'application/json',
-          'Prefer':'resolution=merge-duplicates,return=minimal'
-        },
-        body: JSON.stringify({ id: SUPABASE_ROW_ID, valor: payload, updated_at: new Date().toISOString() })
-      });
-      if(!res.ok){
-        const bodyText = await res.text().catch(()=> '');
-        throw new Error('HTTP '+res.status+' — '+bodyText);
+      if(acc==='reintentar' || acc==='descartar'){ await recargarDesdeNube(true); }
+      else if(acc==='combinar'){
+        const fila = await leerFilaNube('valor,updated_at');
+        if(fila && fila.valor && fila.valor.datos) unirDatos(fila.valor.datos);
+        remoteStamp = fila ? fila.updated_at : null;
+        conflictoRemoto = false; mostrarBanner('');
+        renderAll(); scheduleSyncSupabase();
       }
-      if(statusEl) statusEl.textContent = '✓ Sincronizado con el equipo';
+      else if(acc==='pisar'){
+        if(!confirm('Esto reemplaza lo que guardó el resto del equipo por tu versión. ¿Seguro?')) return;
+        conflictoRemoto = false; mostrarBanner('');
+        await syncSupabaseNow(true);
+      }
+    }catch(e){ console.error(e); alert('No se pudo completar la acción: '+e.message); }
+  }
+
+  function computeChequesSummaryDatos(){
+    return {
+      resumen: computeChequesSummary(),
+      datos: { ops, cartera, gastos, uploadedFiles: [...uploadedFiles], mesesCerrados: [...mesesCerrados], papelera }
+    };
+  }
+  function scheduleSyncSupabase(){
+    dirty = true;
+    clearTimeout(syncTimer);
+    syncTimer = setTimeout(()=>syncSupabaseNow(false), 800); // agrupa cambios seguidos en un solo envío
+  }
+  async function leerFilaNube(cols){
+    const res = await fetch(`${SUPABASE_URL}/rest/v1/${SUPABASE_TABLE}?id=eq.${SUPABASE_ROW_ID}&select=${cols}`, { headers: headersSb() });
+    if(!res.ok) throw new Error('HTTP '+res.status);
+    const rows = await res.json();
+    return rows && rows[0] ? rows[0] : null;
+  }
+  // Una vez por día, antes del primer guardado, deja una copia del estado anterior (para poder volver atrás). Se conservan 14 días.
+  async function respaldoDiarioNube(fila){
+    const hoy = new Date().toISOString().slice(0,10);
+    if(ultimoRespaldoNube === hoy) return;
+    ultimoRespaldoNube = hoy;
+    if(!fila || !fila.valor || !fila.valor.datos) return;
+    try{
+      await fetch(`${SUPABASE_URL}/rest/v1/${SUPABASE_TABLE}?on_conflict=id`, {
+        method:'POST',
+        headers: headersSb({'Content-Type':'application/json','Prefer':'resolution=ignore-duplicates,return=minimal'}),
+        body: JSON.stringify({ id:'backup_'+hoy, valor:{ datos: fila.valor.datos, respaldo_de: fila.updated_at }, updated_at: new Date().toISOString() })
+      });
+      const corte = new Date(Date.now()-14*86400000).toISOString().slice(0,10);
+      await fetch(`${SUPABASE_URL}/rest/v1/${SUPABASE_TABLE}?id=like.backup_*&id=lt.backup_${corte}`, { method:'DELETE', headers: headersSb() });
+    }catch(e){ console.warn('Respaldo diario no disponible:', e); }
+  }
+  async function syncSupabaseNow(forzar){
+    syncTimer = null;
+    if(!cargaRemotaOk){ setEstado('⚠ Sin datos del equipo: no se guarda'); bannerSinCarga(); return; }
+    if(!dirty && !forzar) return;
+    if(sincronizando){ resync = true; return; }
+    sincronizando = true;
+    try{
+      setEstado('⏳ Sincronizando…');
+      const fila = await leerFilaNube('valor,updated_at');       // estado actual del equipo
+      const remotoStamp = fila ? fila.updated_at : null;
+      if(!forzar && !mismoInstante(remotoStamp, remoteStamp)){
+        conflictoRemoto = true; setEstado('⚠ Conflicto: no se guardó'); bannerConflicto(); return;
+      }
+      await respaldoDiarioNube(fila);
+      const stamp = new Date().toISOString();
+      const res = await fetch(`${SUPABASE_URL}/rest/v1/${SUPABASE_TABLE}?on_conflict=id&select=updated_at`, {
+        method:'POST',
+        headers: headersSb({'Content-Type':'application/json','Prefer':'resolution=merge-duplicates,return=representation'}),
+        body: JSON.stringify({ id: SUPABASE_ROW_ID, valor: computeChequesSummaryDatos(), updated_at: stamp })
+      });
+      if(!res.ok){ const t = await res.text().catch(()=> ''); throw new Error('HTTP '+res.status+' — '+t); }
+      let nuevo = stamp;
+      try{ const r = await res.json(); if(r && r[0] && r[0].updated_at) nuevo = r[0].updated_at; }catch(e){}
+      remoteStamp = nuevo; dirty = false; conflictoRemoto = false; mostrarBanner('');
+      setEstado('✓ Sincronizado con el equipo');
     }catch(e){
       console.error('Error sincronizando con Supabase:', e);
-      if(statusEl) statusEl.textContent = '⚠ No se pudo sincronizar';
+      setEstado('⚠ No se pudo sincronizar');
+    }finally{
+      sincronizando = false;
+      if(resync){ resync = false; scheduleSyncSupabase(); }
     }
   }
 
   let fullDataLoaded = false;
   let fullDataPromise = null;
-  // Carga una sola vez, al abrir el panel, los datos completos guardados por
-  // cualquier persona del equipo (Supabase, no window.storage — así funciona
-  // igual para todos sin importar dónde se abra el archivo).
-  async function ensureFullDataLoaded(){
+  // Carga los datos completos guardados por el equipo. Solo se habilita guardar si la carga salió bien.
+  async function ensureFullDataLoaded(forzar){
+    if(forzar){ fullDataLoaded = false; fullDataPromise = null; }
     if(fullDataLoaded) return;
     if(!fullDataPromise){
       fullDataPromise = (async ()=>{
         try{
-          const res = await fetch(`${SUPABASE_URL}/rest/v1/${SUPABASE_TABLE}?id=eq.${SUPABASE_ROW_ID}&select=valor`, {
-            headers:{ 'apikey': SUPABASE_KEY, 'Authorization': 'Bearer '+SUPABASE_KEY }
-          });
-          if(res.ok){
-            const rows = await res.json();
-            const v = rows && rows[0] ? rows[0].valor : null;
-            const datos = v && v.datos ? v.datos : null;
-            if(datos){
-              ops = datos.ops || [];
-              cartera = datos.cartera || [];
-              gastos = datos.gastos || [];
-              uploadedFiles = new Set(datos.uploadedFiles || []);
-              mesesCerrados = new Set(datos.mesesCerrados || []);
-            }
+          const fila = await leerFilaNube('valor,updated_at');
+          const v = fila ? fila.valor : null;
+          const datos = v && v.datos ? v.datos : null;
+          if(datos){
+            ops = datos.ops || [];
+            cartera = datos.cartera || [];
+            gastos = datos.gastos || [];
+            uploadedFiles = new Set(datos.uploadedFiles || []);
+            mesesCerrados = new Set(datos.mesesCerrados || []);
+            papelera = datos.papelera || [];
+            const now = new Date();
+            const mesAct = now.getFullYear()+'-'+String(now.getMonth()+1).padStart(2,'0');
+            if(!v.resumen || v.resumen.mes !== mesAct) dirty = true;   // refresca el resumen mensual que lee el Panel General
           }
-        }catch(e){ console.error('Error cargando datos compartidos:', e); }
+          remoteStamp = fila ? fila.updated_at : null;
+          cargaRemotaOk = true; conflictoRemoto = false;
+          mostrarBanner(''); setEstado('✓ Al día con el equipo');
+          if(dirty) scheduleSyncSupabase();
+        }catch(e){
+          console.error('Error cargando datos compartidos:', e);
+          cargaRemotaOk = false; setEstado('⚠ Sin conexión'); bannerSinCarga();
+        }
         fullDataLoaded = true;
       })();
     }
     return fullDataPromise;
+  }
+  // Vuelve a leer lo del equipo. Si hay cambios propios pendientes y no se descarta, primero los guarda.
+  async function recargarDesdeNube(descartar){
+    clearTimeout(syncTimer); syncTimer = null;
+    if(!descartar && dirty && cargaRemotaOk && !conflictoRemoto){
+      await syncSupabaseNow(false);
+      if(conflictoRemoto) return;   // el aviso ya ofrece opciones
+    }
+    dirty = false; conflictoRemoto = false;
+    await ensureFullDataLoaded(true);
+    await loadOps(); await loadCartera(); await loadGastos();
+    renderAll();
+  }
+
+  // ---------- papelera (deshacer) y respaldos ----------
+  function filasPapelera(){ return papelera.reduce((s,e)=> s+e.ops.length+e.gastos.length+e.cartera.length, 0); }
+  function papeleraGuardar(desc, items, fps){
+    const e = { id: uid(), cuando: new Date().toISOString(), desc,
+      ops: (items&&items.ops)||[], gastos: (items&&items.gastos)||[], cartera: (items&&items.cartera)||[], fps: fps||[] };
+    if(e.ops.length+e.gastos.length+e.cartera.length === 0) return;
+    papelera.push(e);
+    while(papelera.length > PAPELERA_MAX || (papelera.length>1 && filasPapelera() > PAPELERA_MAX_FILAS)) papelera.shift();
+  }
+  function ordenarDatos(){
+    ops.sort((a,b)=>(a.fecha||'').localeCompare(b.fecha||''));
+    gastos.sort((a,b)=>(a.fecha||'').localeCompare(b.fecha||''));
+    cartera.sort((a,b)=>(a.fechaPago||'').localeCompare(b.fechaPago||''));
+  }
+  // cuántas filas del respaldo no están hoy (por id)
+  function contarNuevos(datos){
+    const nuevos = (actual, extra)=>{ const ids = new Set(actual.map(r=>r.id)); return (extra||[]).filter(r=>r && r.id && !ids.has(r.id)).length; };
+    return { ops: nuevos(ops, datos.ops), gastos: nuevos(gastos, datos.gastos), cartera: nuevos(cartera, datos.cartera) };
+  }
+  // une un respaldo con lo actual: agrega lo que falta, no borra ni pisa nada de lo que hay
+  function unirDatos(datos){
+    const n = contarNuevos(datos);
+    const unir = (actual, extra)=>{ const ids = new Set(actual.map(r=>r.id)); return actual.concat((extra||[]).filter(r=>r && r.id && !ids.has(r.id))); };
+    ops = unir(ops, datos.ops); gastos = unir(gastos, datos.gastos); cartera = unir(cartera, datos.cartera);
+    (datos.uploadedFiles||[]).forEach(f=>uploadedFiles.add(f));
+    (datos.mesesCerrados||[]).forEach(m=>mesesCerrados.add(m));
+    const pids = new Set(papelera.map(e=>e.id));
+    (datos.papelera||[]).forEach(e=>{ if(e && e.id && !pids.has(e.id)) papelera.push(e); });
+    ordenarDatos();
+    return n;
+  }
+  async function deshacerBorrado(id){
+    const i = id ? papelera.findIndex(e=>e.id===id) : papelera.length-1;
+    if(i<0){ alert('No hay nada para deshacer.'); return; }
+    const e = papelera[i];
+    const n = e.ops.length+e.gastos.length+e.cartera.length;
+    const cuando = new Date(e.cuando).toLocaleString('es-AR');
+    if(!confirm(`Se va a restaurar: ${e.desc} (${n} fila(s), borradas el ${cuando}). No se pisa nada de lo actual. ¿Seguro?`)) return;
+    papelera.splice(i,1);
+    const agregar = (actual, extra)=>{ const ids = new Set(actual.map(r=>r.id)); return actual.concat(extra.filter(r=>!ids.has(r.id))); };
+    ops = agregar(ops, e.ops); gastos = agregar(gastos, e.gastos); cartera = agregar(cartera, e.cartera);
+    (e.fps||[]).forEach(fp=>uploadedFiles.add(fp));
+    ordenarDatos();
+    scheduleSyncSupabase();
+    renderAll();
+  }
+  // saca filas de la lista y avisa a la nube (la papelera se guarda aparte, con papeleraGuardar)
+  async function quitarFilas(tipo, filas){
+    const ids = new Set(filas.map(r=>r.id));
+    for(const r of filas){ if(tipo==='ops') await deleteOp(r.id); else if(tipo==='gastos') await deleteGasto(r.id); else await deleteChk(r.id); }
+    if(tipo==='ops') ops = ops.filter(r=>!ids.has(r.id));
+    else if(tipo==='gastos') gastos = gastos.filter(r=>!ids.has(r.id));
+    else cartera = cartera.filter(r=>!ids.has(r.id));
+  }
+  function itemsPapelera(tipo, filas){ return tipo==='ops' ? {ops:filas} : tipo==='gastos' ? {gastos:filas} : {cartera:filas}; }
+  function actualizarBotonDeshacer(){
+    const b = document.getElementById('btn-deshacer'); if(!b) return;
+    if(papelera.length===0){ b.style.display='none'; return; }
+    const e = papelera[papelera.length-1];
+    b.style.display = '';
+    b.textContent = '↩ Deshacer: ' + (e.desc.length>36 ? e.desc.slice(0,36)+'…' : e.desc);
+    b.title = `Restaura lo último que borraste (${e.ops.length+e.gastos.length+e.cartera.length} fila(s))`;
+  }
+  async function abrirRespaldos(){
+    const m = document.getElementById('modal-resp'); m.style.display = 'flex';
+    const lp = document.getElementById('lista-papelera');
+    lp.innerHTML = papelera.length===0 ? '<div class="note">La papelera está vacía.</div>' :
+      papelera.slice().reverse().map(e=>{
+        const n = e.ops.length+e.gastos.length+e.cartera.length;
+        return `<div class="resp-item"><span>${new Date(e.cuando).toLocaleString('es-AR')} — ${e.desc} <span class="note">(${n} fila(s))</span></span><button class="ghost-btn" data-pap="${e.id}">Restaurar</button></div>`;
+      }).join('');
+    lp.querySelectorAll('[data-pap]').forEach(b=> b.addEventListener('click', async ()=>{ await deshacerBorrado(b.dataset.pap); abrirRespaldos(); }));
+    const ln = document.getElementById('lista-resp-nube'); ln.innerHTML = 'Buscando…';
+    try{
+      const res = await fetch(`${SUPABASE_URL}/rest/v1/${SUPABASE_TABLE}?id=like.backup_*&select=id,updated_at&order=id.desc`, { headers: headersSb() });
+      if(!res.ok) throw new Error('HTTP '+res.status);
+      const filas = await res.json();
+      ln.innerHTML = filas.length===0 ? '<div class="note">Todavía no hay respaldos automáticos (se crea uno por día, en el primer guardado).</div>' :
+        filas.map(f=>`<div class="resp-item"><span>${f.id.replace('backup_','')} <span class="note">— estado del equipo antes del primer cambio de ese día</span></span><button class="ghost-btn" data-bk="${f.id}">Restaurar</button></div>`).join('');
+      ln.querySelectorAll('[data-bk]').forEach(b=> b.addEventListener('click', async ()=>{
+        try{
+          const r2 = await fetch(`${SUPABASE_URL}/rest/v1/${SUPABASE_TABLE}?id=eq.${b.dataset.bk}&select=valor`, { headers: headersSb() });
+          if(!r2.ok) throw new Error('HTTP '+r2.status);
+          const rows = await r2.json();
+          const datos = rows && rows[0] && rows[0].valor ? rows[0].valor.datos : null;
+          await restaurarDatos(datos, 'el respaldo del '+b.dataset.bk.replace('backup_',''));
+          abrirRespaldos();
+        }catch(e){ alert('No se pudo leer ese respaldo: '+e.message); }
+      }));
+    }catch(e){
+      ln.innerHTML = '<div class="note">No se pudieron leer los respaldos de la nube (puede que no estén habilitados). Igual podés descargar uno a mano arriba.</div>';
+    }
+  }
+  function descargarArchivo(nombre, contenido, tipo){
+    const blob = new Blob([contenido], {type: tipo});
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url; a.download = nombre;
+    document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(()=>URL.revokeObjectURL(url), 1500);
+  }
+  function descargarRespaldo(){
+    const hoy = new Date().toISOString().slice(0,10);
+    const datos = { version:1, generado: new Date().toISOString(), ops, cartera, gastos, uploadedFiles:[...uploadedFiles], mesesCerrados:[...mesesCerrados], papelera };
+    descargarArchivo(`respaldo_panel_${hoy}.json`, JSON.stringify(datos), 'application/json');
+  }
+  async function restaurarDatos(datos, origen){
+    if(!datos || !Array.isArray(datos.ops) && !Array.isArray(datos.gastos) && !Array.isArray(datos.cartera)){ alert('El respaldo no tiene el formato esperado.'); return; }
+    const n = contarNuevos(datos);
+    if(n.ops+n.gastos+n.cartera===0){ alert('Ese respaldo no tiene nada que no esté ya cargado.'); return; }
+    if(!confirm(`Desde ${origen} se van a recuperar ${n.ops} operación(es), ${n.gastos} movimiento(s) y ${n.cartera} cheque(s) que hoy no están. No se borra ni se pisa nada de lo actual. ¿Seguro?`)) return;
+    unirDatos(datos);
+    scheduleSyncSupabase();
+    renderAll();
+    alert('Listo, respaldo restaurado.');
   }
 
   // ---------- helpers ----------
@@ -1719,31 +2065,39 @@
       wrap.innerHTML = '<div class="empty-state">Subí un comprobante o cargá una operación a mano.</div>';
       return;
     }
-    const rows = filtered.slice().reverse().map(o=>`
-      <tr>
-        <td>${tag(o.banco)}</td>
-        <td>${o.fecha||'—'}</td>
-        <td>${o.nro||'—'}</td>
-        <td class="num">${money(o.importe)}</td>
-        <td class="num">${money(o.interes)}</td>
-        <td class="num">${money(costoTotal(o))}</td>
-        <td>${o.nota?`<span class="note">${o.nota}</span>`:''}</td>
-        <td>${mesEstaCerrado(monthKey(o.fecha)) ? '<span class="note" title="Mes cerrado — protegido contra borrado">🔒</span>' : `<button class="link" data-id="${o.id}">borrar</button>`}</td>
-      </tr>`).join('');
+    const LIM = 400;
+    const grupos = agrupar(filtered, o=>[o.fecha||'sin-fecha', o.banco, o.empresa||'Spotsline'].join('|')).map(g=>{
+      const o0 = g.items[0];
+      return Object.assign(g, { fecha:o0.fecha||'', banco:o0.banco, empresa:o0.empresa||'Spotsline',
+        importe: g.items.reduce((s,o)=>s+(Number(o.importe)||0),0),
+        interes: g.items.reduce((s,o)=>s+(Number(o.interes)||0),0),
+        costo: g.items.reduce((s,o)=>s+costoTotal(o),0) });
+    }).sort((x,y)=> (y.fecha||'').localeCompare(x.fecha||'') || x.banco.localeCompare(y.banco));
+    const visibles = grupos.slice(0, LIM);
+    const rows = visibles.map((g,i)=>{
+      const cerrado = mesEstaCerrado(monthKey(g.fecha));
+      const abierto = gruposAbiertos.has('o:'+g.key);
+      let html = `<tr class="grp">
+        <td>${tag(g.banco)}</td>
+        <td>${g.fecha||'—'}</td>
+        <td class="note">${g.items.length} operación(es)${g.empresa!=='Spotsline' ? ' · '+g.empresa : ''}</td>
+        <td class="num">${money(g.importe)}</td><td class="num">${money(g.interes)}</td><td class="num">${money(g.costo)}</td>
+        <td><button class="lupa${abierto?' on':''}" data-lupa="${i}" title="Ver el detalle de este día">🔍</button></td>
+        <td>${cerrado ? '<span class="note" title="Mes cerrado — protegido contra borrado">🔒</span>' : `<button class="link" data-gdel="${i}">borrar día</button>`}</td>
+      </tr>`;
+      if(abierto){
+        html += g.items.map(o=>`<tr class="det">
+          <td></td><td class="note">N° ${o.nro||'—'}</td><td class="note">${o.nota||''}</td>
+          <td class="num">${money(o.importe)}</td><td class="num">${money(o.interes)}</td><td class="num">${money(costoTotal(o))}</td>
+          <td></td><td>${cerrado ? '' : `<button class="link" data-id="${o.id}">borrar</button>`}</td></tr>`).join('');
+      }
+      return html;
+    }).join('');
     wrap.innerHTML = `<table><thead><tr>
-      <th>Banco</th><th>Fecha</th><th>N° op.</th><th class="num">Importe</th>
+      <th>Banco</th><th>Fecha</th><th>Detalle</th><th class="num">Importe</th>
       <th class="num">Interés</th><th class="num">Costo fin.</th><th></th><th></th>
-    </tr></thead><tbody>${rows}</tbody></table>`;
-    wrap.querySelectorAll('button.link').forEach(btn=>{
-      btn.addEventListener('click', async ()=>{
-        const id = btn.dataset.id;
-        const op = ops.find(o=>o.id===id);
-        if(op && mesEstaCerrado(monthKey(op.fecha))){ alert('Este mes está cerrado — no se puede borrar.'); return; }
-        ops = ops.filter(o=>o.id!==id);
-        await deleteOp(id);
-        renderAll();
-      });
-    });
+    </tr></thead><tbody>${rows}</tbody></table>` + (grupos.length>LIM ? `<div class="note" style="padding:8px 10px;">Mostrando los ${LIM} días más recientes de ${grupos.length} (filtrá por banco/mes para ver el resto).</div>` : '');
+    conectarTablaAgrupada(wrap, 'ops', visibles);
   }
 
   // ---------- render: cartera tab ----------
@@ -1790,8 +2144,8 @@
         const id = btn.dataset.id;
         const c = cartera.find(x=>x.id===id);
         if(c && mesEstaCerrado(monthKey(c.fechaPago))){ alert('Este mes está cerrado — no se puede borrar.'); return; }
-        cartera = cartera.filter(x=>x.id!==id);
-        await deleteChk(id);
+        if(c){ papeleraGuardar('1 cheque de cartera', {cartera:[c]}); await quitarFilas('cartera', [c]); }
+        scheduleSyncSupabase();
         renderAll();
       });
     });
@@ -1803,6 +2157,40 @@
     'IVA':'#a78bfa', 'IIBB / Percepciones':'#fb923c', 'Impuesto Ley 25413':'#22c55e'
   };
   let activeCategoria = null;
+  let gastosModo = 'dia-cat';
+  const gruposAbiertos = new Set();   // grupos con la lupa abierta
+  function agrupar(rows, keyFn){
+    const m = new Map();
+    for(const r of rows){ const k = keyFn(r); if(!m.has(k)) m.set(k, []); m.get(k).push(r); }
+    return [...m.entries()].map(([key, items])=>({key, items}));
+  }
+  async function borrarFila(tipo, id){
+    const lista = tipo==='ops' ? ops : tipo==='gastos' ? gastos : cartera;
+    const r = lista.find(x=>x.id===id); if(!r) return;
+    if(mesEstaCerrado(monthKey(tipo==='cartera' ? r.fechaPago : r.fecha))){ alert('Este mes está cerrado — no se puede borrar.'); return; }
+    papeleraGuardar(`1 ${tipo==='ops'?'operación':tipo==='gastos'?'movimiento':'cheque'} de ${r.banco}`, itemsPapelera(tipo, [r]));
+    await quitarFilas(tipo, [r]);
+    scheduleSyncSupabase(); renderAll();
+  }
+  async function borrarGrupo(tipo, grupo){
+    if(!grupo) return;
+    if(mesEstaCerrado(monthKey(grupo.fecha))){ alert('Este mes está cerrado — no se puede borrar.'); return; }
+    const n = grupo.items.length;
+    const desc = tipo==='ops' ? `Operaciones de ${grupo.banco} del ${grupo.fecha||'sin fecha'}` : `Gastos de ${grupo.banco} del ${grupo.fecha||'sin fecha'}${gastosModo==='dia-cat' ? ' ('+grupo.categoria+')' : ''}`;
+    if(!confirm(`Se van a borrar ${n} ${tipo==='ops'?'operación(es)':'movimiento(s)'}: ${desc}. Lo podés deshacer. ¿Seguro?`)) return;
+    papeleraGuardar(desc, itemsPapelera(tipo, grupo.items));
+    await quitarFilas(tipo, grupo.items);
+    scheduleSyncSupabase(); renderAll();
+  }
+  function conectarTablaAgrupada(wrap, tipo, visibles){
+    wrap.querySelectorAll('[data-lupa]').forEach(b=> b.addEventListener('click', ()=>{
+      const k = (tipo==='ops'?'o:':'g:') + visibles[+b.dataset.lupa].key;
+      if(gruposAbiertos.has(k)) gruposAbiertos.delete(k); else gruposAbiertos.add(k);
+      if(tipo==='ops') renderOps(); else renderGastos();
+    }));
+    wrap.querySelectorAll('[data-gdel]').forEach(b=> b.addEventListener('click', ()=> borrarGrupo(tipo, visibles[+b.dataset.gdel])));
+    wrap.querySelectorAll('button.link[data-id]').forEach(b=> b.addEventListener('click', ()=> borrarFila(tipo, b.dataset.id)));
+  }
   function renderGastos(){
     const filtered = filteredGastos().filter(g => !activeCategoria || g.categoria===activeCategoria);
     const costRows = filtered.filter(g=>g.cost && !g.exclude);
@@ -1857,29 +2245,231 @@
       wrap.innerHTML = '<div class="empty-state">Subí un extracto de cuenta (Excel) para ver los movimientos.</div>';
       return;
     }
-    const rows = costRows.slice().reverse().slice(0,300).map(g=>`
-      <tr>
-        <td>${tag(g.banco)}</td>
-        <td>${g.empresa}</td>
-        <td>${g.fecha||'—'}</td>
-        <td><span class="note">${g.concepto}</span></td>
+    const LIM = 500;
+    const porDia = (gastosModo==='dia');
+    const grupos = agrupar(costRows, g=>[g.fecha||'sin-fecha', g.banco, g.empresa, porDia?'':g.categoria].join('|')).map(gr=>{
+      const g0 = gr.items[0];
+      const cats = [...new Set(gr.items.map(x=>x.categoria))];
+      return Object.assign(gr, { fecha:g0.fecha||'', banco:g0.banco, empresa:g0.empresa,
+        categoria: porDia ? (cats.length===1 ? cats[0] : `${cats.length} categorías`) : g0.categoria,
+        total: gr.items.reduce((s,x)=>s+(Number(x.importe)||0),0) });
+    }).sort((x,y)=> (y.fecha||'').localeCompare(x.fecha||'') || x.banco.localeCompare(y.banco) || y.total - x.total);
+    const visibles = grupos.slice(0, LIM);
+    const rows = visibles.map((g,i)=>{
+      const cerrado = mesEstaCerrado(monthKey(g.fecha));
+      const abierto = gruposAbiertos.has('g:'+g.key);
+      let html = `<tr class="grp">
+        <td>${tag(g.banco)}</td><td>${g.empresa}</td><td>${g.fecha||'—'}</td>
         <td>${g.categoria}</td>
-        <td class="num">${money(g.importe)}</td>
-        <td>${mesEstaCerrado(monthKey(g.fecha)) ? '<span class="note" title="Mes cerrado — protegido contra borrado">🔒</span>' : `<button class="link" data-id="${g.id}">borrar</button>`}</td>
-      </tr>`).join('');
+        <td class="num note">${g.items.length} mov.</td>
+        <td class="num">${money(g.total)}</td>
+        <td><button class="lupa${abierto?' on':''}" data-lupa="${i}" title="Ver los movimientos de este grupo">🔍</button></td>
+        <td>${cerrado ? '<span class="note" title="Mes cerrado — protegido contra borrado">🔒</span>' : `<button class="link" data-gdel="${i}">borrar grupo</button>`}</td>
+      </tr>`;
+      if(abierto){
+        html += g.items.map(x=>`<tr class="det">
+          <td></td><td></td><td></td>
+          <td colspan="2" class="note">${porDia ? x.categoria+' — ' : ''}${x.concepto}</td>
+          <td class="num">${money(x.importe)}</td>
+          <td></td><td>${cerrado ? '' : `<button class="link" data-id="${x.id}">borrar</button>`}</td></tr>`).join('');
+      }
+      return html;
+    }).join('');
     wrap.innerHTML = `<table><thead><tr>
-      <th>Banco</th><th>Empresa</th><th>Fecha</th><th>Concepto</th><th>Categoría</th><th class="num">Importe</th><th></th>
-    </tr></thead><tbody>${rows}</tbody></table>` + (costRows.length>300? `<div class="note" style="padding:8px 10px;">Mostrando los primeros 300 de ${costRows.length} movimientos (filtrá por banco/mes para ver el resto).</div>` : '');
-    wrap.querySelectorAll('button.link').forEach(btn=>{
-      btn.addEventListener('click', async ()=>{
-        const id = btn.dataset.id;
-        const g = gastos.find(x=>x.id===id);
-        if(g && mesEstaCerrado(monthKey(g.fecha))){ alert('Este mes está cerrado — no se puede borrar.'); return; }
-        gastos = gastos.filter(x=>x.id!==id);
-        await deleteGasto(id);
-        renderAll();
-      });
+      <th>Banco</th><th>Empresa</th><th>Fecha</th><th>Categoría</th><th class="num">Cant.</th><th class="num">Importe</th><th></th><th></th>
+    </tr></thead><tbody>${rows}</tbody></table>` + (grupos.length>LIM ? `<div class="note" style="padding:8px 10px;">Mostrando los ${LIM} grupos más recientes de ${grupos.length} (filtrá por banco/mes para ver el resto).</div>` : '');
+    conectarTablaAgrupada(wrap, 'gastos', visibles);
+  }
+
+  // ---------- control de carga ----------
+  function dmy(iso){ return iso ? iso.slice(8,10)+'/'+iso.slice(5,7) : '—'; }
+  function calcularControlCarga(){
+    const hoy = new Date();
+    const mesActual = hoy.getFullYear()+'-'+String(hoy.getMonth()+1).padStart(2,'0');
+    const g = gastos.filter(x=>!filters.empresa || x.empresa===filters.empresa);
+    const o = ops.filter(x=>!filters.empresa || (x.empresa||'Spotsline')===filters.empresa);
+    const meses = [...new Set([...g.map(x=>monthKey(x.fecha)), ...o.map(x=>monthKey(x.fecha))])].filter(m=>m!=='sin-fecha').sort();
+    const info = {};
+    const toca = (b,e,m)=>{
+      const k = b+'|'+e;
+      info[k] = info[k] || {banco:b, empresa:e, meses:{}};
+      info[k].meses[m] = info[k].meses[m] || {g:{n:0,min:'',max:''}, o:{n:0}};
+      return info[k].meses[m];
+    };
+    for(const x of g){
+      const m = monthKey(x.fecha); if(m==='sin-fecha') continue;
+      const cc = toca(x.banco, x.empresa, m).g; cc.n++;
+      if(x.fecha){ if(!cc.min || x.fecha<cc.min) cc.min = x.fecha; if(!cc.max || x.fecha>cc.max) cc.max = x.fecha; }
+    }
+    for(const x of o){ const m = monthKey(x.fecha); if(m==='sin-fecha') continue; toca(x.banco, x.empresa||'Spotsline', m).o.n++; }
+    let faltan = 0, revisar = 0;
+    const filas = Object.values(info).sort((a,b)=> (ALL_BANKS.indexOf(a.banco)+100)%100 - (ALL_BANKS.indexOf(b.banco)+100)%100 || a.empresa.localeCompare(b.empresa)).map(f=>{
+      const primero = Object.keys(f.meses).sort()[0];
+      const celdas = {};
+      for(const m of meses){
+        const cm = f.meses[m];
+        if(m < primero){ celdas[m] = {estado:'na'}; continue; }
+        if(!cm || (cm.g.n===0 && cm.o.n===0)){ celdas[m] = {estado:'falta'}; faltan++; continue; }
+        if(cm.g.n===0){ celdas[m] = {estado:'solo-venta', ops:cm.o.n}; revisar++; continue; }
+        let estado = 'ok', aviso = '';
+        const dia = cm.g.max ? +cm.g.max.slice(8,10) : 0;
+        if(m < mesActual && dia < 25){ estado = 'revisar'; aviso = `el último movimiento es del ${dmy(cm.g.max)}`; revisar++; }
+        celdas[m] = {estado, aviso, movs:cm.g.n, desde:cm.g.min, hasta:cm.g.max, ops:cm.o.n};
+      }
+      return {banco:f.banco, empresa:f.empresa, celdas};
     });
+    const presentes = new Set(filas.map(f=>f.banco));
+    return { meses, filas, faltan, revisar, sinDatos: ALL_BANKS.filter(b=>!presentes.has(b)), mesActual };
+  }
+  function renderControl(){
+    const d = calcularControlCarga();
+    const res = document.getElementById('control-resumen');
+    const tabla = document.getElementById('control-tabla');
+    if(!res || !tabla) return;
+    if(d.meses.length===0){
+      res.innerHTML = ''; tabla.innerHTML = '<div class="empty-state">Todavía no hay nada cargado.</div>'; return;
+    }
+    res.innerHTML = `
+      <div class="card"><div class="bank">Meses con datos</div><div class="num">${d.meses.length}</div><div class="sub" style="margin-top:6px;color:var(--text-dim);font-size:11px;">${d.meses.map(monthLabel).join(' · ')}</div></div>
+      <div class="card ${d.faltan?'loss':''}"><div class="bank">Extractos que faltan</div><div class="num" style="${d.faltan?'color:var(--red)':'color:var(--green)'}">${d.faltan}</div><div class="sub" style="margin-top:6px;color:var(--text-dim);font-size:11px;">${d.faltan?'banco/mes sin ningún dato':'no falta ninguno'}</div></div>
+      <div class="card"><div class="bank">Para revisar</div><div class="num" style="color:${d.revisar?'var(--orange)':'var(--green)'}">${d.revisar}</div><div class="sub" style="margin-top:6px;color:var(--text-dim);font-size:11px;">extractos que parecen incompletos</div></div>
+      <div class="card"><div class="bank">Bancos sin ningún dato</div><div class="num" style="font-size:14px;">${d.sinDatos.length ? d.sinDatos.join(', ') : 'ninguno'}</div></div>`;
+    const celda = (cl, m)=>{
+      if(cl.estado==='na') return '<td class="ctl-na">—</td>';
+      if(cl.estado==='falta') return '<td class="ctl-falta">✗ falta el extracto</td>';
+      if(cl.estado==='solo-venta') return `<td class="ctl-solo">⚠ hay venta (${cl.ops} op.) pero falta el extracto de cuenta</td>`;
+      const cls = cl.estado==='ok' ? 'ctl-ok' : 'ctl-revisar';
+      return `<td class="${cls}">${cl.estado==='ok'?'✓':'⚠'} ${cl.movs} mov.<br><span class="note">${dmy(cl.desde)} → ${dmy(cl.hasta)}</span>${cl.ops?`<br><span class="note">venta: ${cl.ops} op.</span>`:''}${cl.aviso?`<br><span class="note" style="color:var(--orange)">${cl.aviso}</span>`:''}</td>`;
+    };
+    tabla.innerHTML = `<div style="overflow-x:auto"><table class="ctl"><thead><tr><th>Banco · empresa</th>${d.meses.map(m=>`<th>${monthLabel(m)}${m===d.mesActual?' (en curso)':''}</th>`).join('')}</tr></thead><tbody>${
+      d.filas.map(f=>`<tr><td style="white-space:nowrap">${tag(f.banco)} <span class="note">${f.empresa}</span></td>${d.meses.map(m=>celda(f.celdas[m], m)).join('')}</tr>`).join('')
+    }</tbody></table></div>`;
+  }
+
+  // ---------- comparativo mes a mes ----------
+  const CATEGORIAS_GASTO = ['Interés por descubierto','Comisiones','Sellos','IVA','IIBB / Percepciones','Impuesto Ley 25413'];
+  function calcularComparativo(){
+    const okBanco = (b)=> !filters.bank || b===filters.bank;
+    const okEmp = (e)=> !filters.empresa || e===filters.empresa;
+    const o = ops.filter(x=> okBanco(x.banco) && okEmp(x.empresa||'Spotsline'));
+    const g = gastos.filter(x=> x.cost && !x.exclude && okBanco(x.banco) && okEmp(x.empresa));
+    const meses = [...new Set([...o.map(x=>monthKey(x.fecha)), ...g.map(x=>monthKey(x.fecha))])].filter(m=>m!=='sin-fecha').sort();
+    const porMes = {};
+    for(const m of meses){
+      const om = o.filter(x=>monthKey(x.fecha)===m), gm = g.filter(x=>monthKey(x.fecha)===m);
+      const cats = {}; for(const k of CATEGORIAS_GASTO) cats[k] = 0;
+      for(const x of gm){ cats[x.categoria] = (cats[x.categoria]||0) + (Number(x.importe)||0); }
+      const vendido = om.reduce((s,x)=>s+(Number(x.importe)||0),0);
+      const costoCheques = om.reduce((s,x)=>s+costoTotal(x),0);
+      const gastosTotal = Object.values(cats).reduce((a,b)=>a+b,0);
+      porMes[m] = { cantOps: om.length, vendido, costoCheques, pct: vendido>0 ? costoCheques/vendido*100 : 0, cats, gastosTotal, total: costoCheques+gastosTotal };
+    }
+    // por banco
+    const bancos = {};
+    for(const x of o){ const m = monthKey(x.fecha); if(m==='sin-fecha') continue; const k = x.banco; bancos[k] = bancos[k]||{}; bancos[k][m] = (bancos[k][m]||0) + costoTotal(x); }
+    for(const x of g){ const m = monthKey(x.fecha); if(m==='sin-fecha') continue; const k = x.banco; bancos[k] = bancos[k]||{}; bancos[k][m] = (bancos[k][m]||0) + (Number(x.importe)||0); }
+    return { meses, porMes, bancos };
+  }
+  // filas del cuadro (las usan la pantalla y el Excel)
+  function filasComparativo(d){
+    const suma = (fn)=> d.meses.reduce((s,m)=>s+fn(d.porMes[m]),0);
+    const fila = (label, fn, tipo, cls)=> ({ label, tipo, cls: cls||'', vals: d.meses.map(m=>fn(d.porMes[m])), total: tipo==='pct' ? null : suma(fn) });
+    const totVend = suma(p=>p.vendido), totCost = suma(p=>p.costoCheques);
+    const rows = [
+      fila('Cheques vendidos (cantidad de operaciones)', p=>p.cantOps, 'n'),
+      fila('Importe vendido', p=>p.vendido, 'money'),
+      fila('Costo financiero de la venta de cheques', p=>p.costoCheques, 'money'),
+      Object.assign(fila('% de pérdida sobre lo vendido', p=>p.pct, 'pct'), { total: totVend>0 ? totCost/totVend*100 : 0 }),
+      { label:'Gastos bancarios', tipo:'head', vals:[], total:null, cls:'grp-h' },
+      ...CATEGORIAS_GASTO.map(k=> fila(k, p=>p.cats[k]||0, 'money', 'sub')),
+      fila('Total gastos bancarios', p=>p.gastosTotal, 'money'),
+      fila('COSTO TOTAL (cheques + bancario)', p=>p.total, 'money', 'tot'),
+    ];
+    const tot = d.meses.map(m=>d.porMes[m].total);
+    rows.push({ label:'Variación del costo total vs. mes anterior', tipo:'var', cls:'', total:null,
+      vals: tot.map((v,i)=> i===0 || tot[i-1]<=0 ? null : (v-tot[i-1])/tot[i-1]*100) });
+    return rows;
+  }
+  function fmtCelda(v, tipo){
+    if(v===null || v===undefined) return '—';
+    if(tipo==='n') return String(v);
+    if(tipo==='pct') return v.toFixed(2)+'%';
+    if(tipo==='var') return (v>0?'▲ ':v<0?'▼ ':'')+Math.abs(v).toFixed(1)+'%';
+    return money(v);
+  }
+  function renderComparativo(){
+    const d = calcularComparativo();
+    const tabla = document.getElementById('comp-tabla'), barras = document.getElementById('comp-barras'), bancos = document.getElementById('comp-bancos');
+    if(!tabla) return;
+    const titulo = document.getElementById('comp-titulo');
+    if(titulo) titulo.textContent = `Comparativo mensual — ${filters.empresa||'Spotsline y SPL Distribuidora'}${filters.bank?' · '+filters.bank:''} · generado el ${new Date().toLocaleDateString('es-AR')}`;
+    if(d.meses.length===0){ barras.innerHTML = ''; bancos.innerHTML = ''; tabla.innerHTML = '<div class="empty-state">Todavía no hay datos para comparar.</div>'; return; }
+    const hoy = new Date(); const mesActual = hoy.getFullYear()+'-'+String(hoy.getMonth()+1).padStart(2,'0');
+    const head = `<tr><th></th>${d.meses.map(m=>`<th>${monthLabel(m)}${m===mesActual?' (en curso)':''}</th>`).join('')}<th>Total</th></tr>`;
+    const body = filasComparativo(d).map(f=>{
+      if(f.tipo==='head') return `<tr class="grp-h"><td colspan="${d.meses.length+2}">${f.label}</td></tr>`;
+      const celdas = f.vals.map(v=>{
+        let cl = '';
+        if(f.tipo==='var' && v!==null) cl = v>0 ? ' class="var-up"' : v<0 ? ' class="var-down"' : '';
+        return `<td${cl}>${fmtCelda(v, f.tipo)}</td>`;
+      }).join('');
+      return `<tr class="${f.cls}"><td>${f.label}</td>${celdas}<td>${f.total===null && f.tipo!=='pct' ? '' : fmtCelda(f.total, f.tipo)}</td></tr>`;
+    }).join('');
+    tabla.innerHTML = `<div style="overflow-x:auto"><table class="comp"><thead>${head}</thead><tbody>${body}</tbody></table></div>`;
+
+    const max = Math.max(...d.meses.map(m=>d.porMes[m].total), 1);
+    barras.innerHTML = `<div class="barras">${d.meses.map(m=>{
+      const p = d.porMes[m]; const hC = p.costoCheques>0 ? Math.max(p.costoCheques/max*100,1) : 0; const hG = p.gastosTotal>0 ? Math.max(p.gastosTotal/max*100,1) : 0;
+      return `<div class="barra"><div class="tt"><b>${money(p.total)}</b></div><div class="col"><div class="seg-g" style="height:${hG}%" title="Gastos bancarios ${money(p.gastosTotal)}"></div><div class="seg-c" style="height:${hC}%" title="Venta de cheques ${money(p.costoCheques)}"></div></div><div class="tt">${monthLabel(m)}${m===mesActual?'<br>(en curso)':''}</div></div>`;
+    }).join('')}</div><div class="barras-leyenda"><span><span class="dot" style="background:var(--gold)"></span> Costo de vender cheques</span><span><span class="dot" style="background:var(--blue)"></span> Gastos bancarios</span></div>`;
+
+    const bk = Object.keys(d.bancos).sort((a,b)=> ALL_BANKS.indexOf(a)-ALL_BANKS.indexOf(b));
+    bancos.innerHTML = `<div style="overflow-x:auto"><table class="comp"><thead>${head}</thead><tbody>${
+      bk.map(b=>`<tr><td>${tag(b)}</td>${d.meses.map(m=>`<td>${d.bancos[b][m]!==undefined ? money(d.bancos[b][m]) : '—'}</td>`).join('')}<td>${money(d.meses.reduce((s,m)=>s+(d.bancos[b][m]||0),0))}</td></tr>`).join('')
+    }</tbody></table></div>`;
+  }
+  function exportarExcelComparativo(){
+    const d = calcularComparativo();
+    if(d.meses.length===0){ alert('No hay datos para exportar.'); return; }
+    const wb = XLSX.utils.book_new();
+    // hoja 1: comparativo
+    const head = ['', ...d.meses.map(monthLabel), 'Total'];
+    const aoa = [[`Comparativo mensual — ${filters.empresa||'Spotsline y SPL Distribuidora'}${filters.bank?' · '+filters.bank:''}`], [], head];
+    for(const f of filasComparativo(d)){
+      if(f.tipo==='head'){ aoa.push([f.label.toUpperCase()]); continue; }
+      aoa.push([f.label, ...f.vals.map(v=> v===null ? '' : (f.tipo==='pct'||f.tipo==='var') ? Math.round(v*100)/100 : v), f.total===null ? '' : (f.tipo==='pct' ? Math.round(f.total*100)/100 : f.total)]);
+    }
+    const ws1 = XLSX.utils.aoa_to_sheet(aoa); ws1['!cols'] = [{wch:46}, ...d.meses.map(()=>({wch:18})), {wch:18}];
+    XLSX.utils.book_append_sheet(wb, ws1, 'Comparativo');
+    // hoja 2: por banco
+    const bk = Object.keys(d.bancos).sort((a,b)=> ALL_BANKS.indexOf(a)-ALL_BANKS.indexOf(b));
+    const aoa2 = [['Banco', ...d.meses.map(monthLabel), 'Total']];
+    for(const b of bk) aoa2.push([b, ...d.meses.map(m=> d.bancos[b][m]!==undefined ? d.bancos[b][m] : ''), d.meses.reduce((s,m)=>s+(d.bancos[b][m]||0),0)]);
+    const ws2 = XLSX.utils.aoa_to_sheet(aoa2); ws2['!cols'] = [{wch:16}, ...d.meses.map(()=>({wch:18})), {wch:18}];
+    XLSX.utils.book_append_sheet(wb, ws2, 'Costo por banco');
+    // hoja 3: gastos por mes, banco, empresa y categoría
+    const okB = (b)=>!filters.bank||b===filters.bank, okE = (e)=>!filters.empresa||e===filters.empresa;
+    const agg = {};
+    for(const x of gastos){ if(!x.cost||x.exclude||!okB(x.banco)||!okE(x.empresa)) continue; const m = monthKey(x.fecha); if(m==='sin-fecha') continue; const k = [m,x.banco,x.empresa,x.categoria].join('|'); agg[k] = (agg[k]||0)+(Number(x.importe)||0); }
+    const aoa3 = [['Mes','Banco','Empresa','Categoría','Importe']].concat(Object.keys(agg).sort().map(k=>{ const [m,b,e,cat] = k.split('|'); return [monthLabel(m), b, e, cat, Math.round(agg[k]*100)/100]; }));
+    const ws3 = XLSX.utils.aoa_to_sheet(aoa3); ws3['!cols'] = [{wch:12},{wch:14},{wch:20},{wch:26},{wch:16}];
+    XLSX.utils.book_append_sheet(wb, ws3, 'Gastos por categoría');
+    // hoja 4: venta de cheques por mes, banco y empresa
+    const agg4 = {};
+    for(const x of ops){ if(!okB(x.banco)||!okE(x.empresa||'Spotsline')) continue; const m = monthKey(x.fecha); if(m==='sin-fecha') continue; const k = [m,x.banco,x.empresa||'Spotsline'].join('|'); const a = agg4[k] = agg4[k]||{n:0,imp:0,int:0,cost:0}; a.n++; a.imp += Number(x.importe)||0; a.int += Number(x.interes)||0; a.cost += costoTotal(x); }
+    const aoa4 = [['Mes','Banco','Empresa','Operaciones','Importe vendido','Interés','Costo financiero total']].concat(Object.keys(agg4).sort().map(k=>{ const [m,b,e] = k.split('|'); const a = agg4[k]; return [monthLabel(m), b, e, a.n, Math.round(a.imp*100)/100, Math.round(a.int*100)/100, Math.round(a.cost*100)/100]; }));
+    const ws4 = XLSX.utils.aoa_to_sheet(aoa4); ws4['!cols'] = [{wch:12},{wch:14},{wch:20},{wch:12},{wch:18},{wch:16},{wch:20}];
+    XLSX.utils.book_append_sheet(wb, ws4, 'Venta de cheques');
+    const out = XLSX.write(wb, {bookType:'xlsx', type:'array'});
+    descargarArchivo(`comparativo_${new Date().toISOString().slice(0,10)}.xlsx`, out, 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+  }
+  function imprimirComparativo(){
+    const p = document.getElementById('panel');
+    p.classList.add('print-comparativo');
+    const quitar = ()=>{ p.classList.remove('print-comparativo'); };
+    window.addEventListener('afterprint', quitar, {once:true});
+    window.print();
+    setTimeout(quitar, 4000);
   }
 
   // ---------- render: indicadores tab ----------
@@ -1969,12 +2559,12 @@
   // suelta el "ya subí este archivo" de los archivos cuyos datos se borraron por completo, para poder volver a subirlos
   function liberarArchivos(banco, origenes){
     const quedan = new Set([...ops, ...gastos, ...cartera].map(r=>r.origen).filter(Boolean));
-    let liberados = 0;
-    for(const fp of [...origenes]){ if(!quedan.has(fp) && uploadedFiles.delete(fp)) liberados++; }
+    const liberados = [];
+    for(const fp of [...origenes]){ if(!quedan.has(fp) && uploadedFiles.delete(fp)) liberados.push(fp); }
     // filas viejas (cargadas antes de que se anotara el origen): si no queda nada de ese banco, se sueltan los archivos con el banco en el nombre
     const quedaBanco = ops.some(o=>o.banco===banco) || gastos.some(g=>g.banco===banco);
     if(!quedaBanco){
-      for(const fp of [...uploadedFiles]){ if(detectBankFromFilename(fp.split('|')[0])===banco && uploadedFiles.delete(fp)) liberados++; }
+      for(const fp of [...uploadedFiles]){ if(detectBankFromFilename(fp.split('|')[0])===banco && uploadedFiles.delete(fp)) liberados.push(fp); }
     }
     return liberados;
   }
@@ -1991,14 +2581,13 @@
     if(candidatos.length===0){ alert(`No hay ${tipo==='ops'?'operaciones':'movimientos'} de ${banco}${alcance}.`); return; }
     if(aBorrar.length===0){ alert(`Todo lo de ${banco}${alcance} está en meses cerrados 🔒: no se borra. Abrí el mes si realmente querés borrarlo.`); return; }
     if(!confirm(`Se van a borrar ${aBorrar.length} ${tipo==='ops'?'operación(es)':'movimiento(s)'} de ${banco}${alcance}.${protegidas ? ` (${protegidas} de meses cerrados quedan protegidos).` : ''} Lo de otros bancos no se toca. ¿Seguro?`)) return;
-    const ids = new Set(aBorrar.map(r=>r.id));
     const origenes = new Set(aBorrar.map(r=>r.origen).filter(Boolean));
-    for(const r of aBorrar){ if(tipo==='ops') await deleteOp(r.id); else await deleteGasto(r.id); }
-    if(tipo==='ops') ops = ops.filter(r=>!ids.has(r.id)); else gastos = gastos.filter(r=>!ids.has(r.id));
-    const liberados = liberarArchivos(banco, origenes);
+    await quitarFilas(tipo, aBorrar);
+    const fpsLiberados = liberarArchivos(banco, origenes);
+    papeleraGuardar(`${tipo==='ops'?'Operaciones':'Gastos'} de ${banco}${alcance}`, itemsPapelera(tipo, aBorrar), fpsLiberados);
     scheduleSyncSupabase();
     renderAll();
-    alert(`Listo: se borraron ${aBorrar.length} de ${banco}. ` + (liberados ? 'Ya podés volver a subir ese extracto (incluso con el mismo nombre).' : 'Si vas a volver a subir el mismo archivo y el panel lo rechaza, cambiale el nombre.'));
+    alert(`Listo: se borraron ${aBorrar.length} de ${banco}. ` + (fpsLiberados.length ? 'Ya podés volver a subir ese extracto (incluso con el mismo nombre). ' : 'Si vas a volver a subir el mismo archivo y el panel lo rechaza, cambiale el nombre. ') + 'Si fue un error, tocá "↩ Deshacer".');
   }
 
   function renderAll(){
@@ -2007,8 +2596,10 @@
     renderCartera();
     renderGastos();
     renderIndicadores();
+    renderComparativo();
+    renderControl();
     poblarSelectsBancos();
-    scheduleSyncSupabase();
+    actualizarBotonDeshacer();
   }
 
   // ---------- events ----------
@@ -2051,8 +2642,21 @@
     document.getElementById('filter-empresa').value = '';
     renderAll();
   });
-  document.getElementById('btn-refresh').addEventListener('click', async ()=>{
-    await loadOps(); await loadCartera(); await loadGastos(); await loadUploadedFiles(); renderAll();
+  document.getElementById('btn-comp-excel').addEventListener('click', ()=> exportarExcelComparativo());
+  document.getElementById('btn-comp-print').addEventListener('click', ()=> imprimirComparativo());
+  document.getElementById('gastos-modo').addEventListener('change', (e)=>{ gastosModo = e.target.value; renderGastos(); });
+  document.getElementById('btn-refresh').addEventListener('click', async ()=>{ await recargarDesdeNube(false); });
+  document.getElementById('btn-deshacer').addEventListener('click', ()=> deshacerBorrado());
+  document.getElementById('btn-respaldos').addEventListener('click', ()=> abrirRespaldos());
+  document.getElementById('btn-resp-cerrar').addEventListener('click', ()=>{ document.getElementById('modal-resp').style.display='none'; });
+  document.getElementById('btn-resp-descargar').addEventListener('click', ()=> descargarRespaldo());
+  document.getElementById('btn-resp-archivo').addEventListener('click', ()=> document.getElementById('file-resp').click());
+  document.getElementById('file-resp').addEventListener('change', async (e)=>{
+    const f = e.target.files[0]; if(!f) return;
+    try{ const datos = JSON.parse(await f.text()); await restaurarDatos(datos, `el archivo "${f.name}"`); }
+    catch(err){ alert('No pude leer ese archivo: '+err.message); }
+    e.target.value = '';
+    document.getElementById('modal-resp').style.display='none';
   });
 
   document.getElementById('btn-add').addEventListener('click', async ()=>{
@@ -2081,8 +2685,8 @@
     const aBorrar = ops.filter(o=>!mesEstaCerrado(monthKey(o.fecha)));
     const protegidas = ops.length - aBorrar.length;
     if(!confirm(`Esto borra ${aBorrar.length} operación(es) de meses abiertos.${protegidas? ` (${protegidas} de meses cerrados quedan protegidas).` : ''} ¿Seguro?`)) return;
-    for(const o of aBorrar) await deleteOp(o.id);
-    ops = ops.filter(o=>mesEstaCerrado(monthKey(o.fecha)));
+    papeleraGuardar('Todas las operaciones de meses abiertos', {ops:aBorrar});
+    await quitarFilas('ops', aBorrar);
     scheduleSyncSupabase();
     renderAll();
   });
@@ -2092,8 +2696,8 @@
     const aBorrar = ops.filter(o=>!o.fecha);
     if(aBorrar.length===0){ alert('No hay operaciones sin fecha.'); return; }
     if(!confirm(`Se van a quitar ${aBorrar.length} operación(es) que quedaron sin fecha por una carga fallida. El resto no se toca. ¿Seguro?`)) return;
-    for(const o of aBorrar) await deleteOp(o.id);
-    ops = ops.filter(o=>!!o.fecha);
+    papeleraGuardar('Operaciones sin fecha', {ops:aBorrar});
+    await quitarFilas('ops', aBorrar);
     scheduleSyncSupabase();
     renderAll();
   });
@@ -2101,8 +2705,8 @@
     const aBorrar = gastos.filter(g=>!g.fecha);
     if(aBorrar.length===0){ alert('No hay movimientos sin fecha.'); return; }
     if(!confirm(`Se van a quitar ${aBorrar.length} movimiento(s) que quedaron sin fecha por una carga fallida. El resto no se toca. ¿Seguro?`)) return;
-    for(const g of aBorrar) await deleteGasto(g.id);
-    gastos = gastos.filter(g=>!!g.fecha);
+    papeleraGuardar('Movimientos sin fecha', {gastos:aBorrar});
+    await quitarFilas('gastos', aBorrar);
     scheduleSyncSupabase();
     renderAll();
   });
@@ -2110,8 +2714,8 @@
     const aBorrar = cartera.filter(c=>!mesEstaCerrado(monthKey(c.fechaPago)));
     const protegidas = cartera.length - aBorrar.length;
     if(!confirm(`Esto vacía ${aBorrar.length} cheque(s) de meses abiertos.${protegidas? ` (${protegidas} de meses cerrados quedan protegidos).` : ''} ¿Seguro?`)) return;
-    for(const c of aBorrar) await deleteChk(c.id);
-    cartera = cartera.filter(c=>mesEstaCerrado(monthKey(c.fechaPago)));
+    papeleraGuardar('Cartera de cheques de meses abiertos', {cartera:aBorrar});
+    await quitarFilas('cartera', aBorrar);
     scheduleSyncSupabase();
     renderAll();
   });
@@ -2119,8 +2723,8 @@
     const aBorrar = gastos.filter(g=>!mesEstaCerrado(monthKey(g.fecha)));
     const protegidas = gastos.length - aBorrar.length;
     if(!confirm(`Esto borra ${aBorrar.length} movimiento(s) de meses abiertos.${protegidas? ` (${protegidas} de meses cerrados quedan protegidos).` : ''} ¿Seguro?`)) return;
-    for(const g of aBorrar) await deleteGasto(g.id);
-    gastos = gastos.filter(g=>mesEstaCerrado(monthKey(g.fecha)));
+    papeleraGuardar('Todos los extractos de meses abiertos', {gastos:aBorrar});
+    await quitarFilas('gastos', aBorrar);
     scheduleSyncSupabase();
     renderAll();
   });
