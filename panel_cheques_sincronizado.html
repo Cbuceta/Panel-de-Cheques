@@ -282,6 +282,7 @@
       <input type="text" id="search-box" placeholder="Buscar por N° operación o nota…">
       <select id="filter-mes"><option value="">Todos los meses</option></select>
       <select id="filter-empresa"><option value="">Ambas empresas</option><option>Spotsline</option><option>SPL Distribuidora</option></select>
+      <button class="ghost-btn" id="btn-toggle-cerrado" style="display:none;"></button>
       <button class="clear-filters" id="btn-clear-filters">Limpiar filtros</button>
     </div>
 
@@ -454,6 +455,7 @@
           <li><strong>Mes:</strong> se arma solo con los meses que tengan datos cargados, en cualquiera de las tres pestañas de datos.</li>
           <li><strong>Empresa:</strong> Spotsline / SPL Distribuidora / ambas.</li>
           <li><strong>Buscar:</strong> por N° de operación o nota, dentro de Operaciones.</li>
+          <li><strong>Cerrar un mes 🔒:</strong> elegí ese mes en el filtro y tocá "Cerrar [mes]" al lado. Un mes cerrado no se puede borrar — ni fila por fila, ni con los botones de "Borrar todo" (esos directamente saltean los meses cerrados). Usalo apenas termines de revisar un mes, para que no se borre por accidente.</li>
         </ul>
 
         <h2>Cosas para tener en cuenta</h2>
@@ -486,6 +488,8 @@
   let ops = [];
   let cartera = [];
   let filters = { bank:null, month:'', search:'', empresa:'', concepto:null };
+  let mesesCerrados = new Set(); // meses "cerrados": protegidos contra borrado accidental
+  function mesEstaCerrado(mk){ return mesesCerrados.has(mk); }
   let gastos = [];
 
   // ═══════════════════════════════════════════════════════
@@ -536,7 +540,7 @@
     try{
       const payload = {
         resumen: computeChequesSummary(),
-        datos: { ops, cartera, gastos, uploadedFiles: [...uploadedFiles] }
+        datos: { ops, cartera, gastos, uploadedFiles: [...uploadedFiles], mesesCerrados: [...mesesCerrados] }
       };
       const res = await fetch(`${SUPABASE_URL}/rest/v1/${SUPABASE_TABLE}?on_conflict=id`, {
         method:'POST',
@@ -581,6 +585,7 @@
               cartera = datos.cartera || [];
               gastos = datos.gastos || [];
               uploadedFiles = new Set(datos.uploadedFiles || []);
+              mesesCerrados = new Set(datos.mesesCerrados || []);
             }
           }
         }catch(e){ console.error('Error cargando datos compartidos:', e); }
@@ -1571,8 +1576,21 @@
     const mesSel = document.getElementById('filter-mes');
     const cur = mesSel.value;
     const meses = [...new Set([...ops.map(o=>monthKey(o.fecha)), ...cartera.map(c=>monthKey(c.fechaPago)), ...gastos.map(g=>monthKey(g.fecha))])].filter(m=>m!=='sin-fecha').sort();
-    mesSel.innerHTML = '<option value="">Todos los meses</option>' + meses.map(m=>`<option value="${m}">${monthLabel(m)}</option>`).join('');
+    mesSel.innerHTML = '<option value="">Todos los meses</option>' + meses.map(m=>`<option value="${m}">${mesEstaCerrado(m)?'🔒 ':''}${monthLabel(m)}</option>`).join('');
     mesSel.value = filters.month || '';
+
+    // botón de cerrar/abrir el mes seleccionado
+    const btnCerrar = document.getElementById('btn-toggle-cerrado');
+    if(!filters.month){
+      btnCerrar.style.display = 'none';
+    } else {
+      btnCerrar.style.display = '';
+      const cerrado = mesEstaCerrado(filters.month);
+      btnCerrar.textContent = cerrado ? `🔒 Abrir ${monthLabel(filters.month)}` : `🔓 Cerrar ${monthLabel(filters.month)}`;
+      btnCerrar.title = cerrado
+        ? 'Este mes está protegido contra borrado. Tocá para volver a permitir borrar.'
+        : 'Protege este mes para que no se pueda borrar por accidente (ni individual ni con "Borrar todo").';
+    }
   }
 
   // ---------- render: ops tab ----------
@@ -1627,7 +1645,7 @@
         <td class="num">${money(o.interes)}</td>
         <td class="num">${money(costoTotal(o))}</td>
         <td>${o.nota?`<span class="note">${o.nota}</span>`:''}</td>
-        <td><button class="link" data-id="${o.id}">borrar</button></td>
+        <td>${mesEstaCerrado(monthKey(o.fecha)) ? '<span class="note" title="Mes cerrado — protegido contra borrado">🔒</span>' : `<button class="link" data-id="${o.id}">borrar</button>`}</td>
       </tr>`).join('');
     wrap.innerHTML = `<table><thead><tr>
       <th>Banco</th><th>Fecha</th><th>N° op.</th><th class="num">Importe</th>
@@ -1636,6 +1654,8 @@
     wrap.querySelectorAll('button.link').forEach(btn=>{
       btn.addEventListener('click', async ()=>{
         const id = btn.dataset.id;
+        const op = ops.find(o=>o.id===id);
+        if(op && mesEstaCerrado(monthKey(op.fecha))){ alert('Este mes está cerrado — no se puede borrar.'); return; }
         ops = ops.filter(o=>o.id!==id);
         await deleteOp(id);
         renderAll();
@@ -1677,7 +1697,7 @@
         <td>${c.numero||'—'}</td>
         <td>${c.fechaPago||'—'}</td>
         <td class="num">${money(c.importe)}</td>
-        <td><button class="link" data-id="${c.id}">borrar</button></td>
+        <td>${mesEstaCerrado(monthKey(c.fechaPago)) ? '<span class="note" title="Mes cerrado — protegido contra borrado">🔒</span>' : `<button class="link" data-id="${c.id}">borrar</button>`}</td>
       </tr>`).join('');
     wrap.innerHTML = `<table><thead><tr>
       <th>Banco</th><th>Librador</th><th>N° cheque</th><th>Vto. pago</th><th class="num">Importe</th><th></th>
@@ -1685,7 +1705,9 @@
     wrap.querySelectorAll('button.link').forEach(btn=>{
       btn.addEventListener('click', async ()=>{
         const id = btn.dataset.id;
-        cartera = cartera.filter(c=>c.id!==id);
+        const c = cartera.find(x=>x.id===id);
+        if(c && mesEstaCerrado(monthKey(c.fechaPago))){ alert('Este mes está cerrado — no se puede borrar.'); return; }
+        cartera = cartera.filter(x=>x.id!==id);
         await deleteChk(id);
         renderAll();
       });
@@ -1760,7 +1782,7 @@
         <td><span class="note">${g.concepto}</span></td>
         <td>${g.categoria}</td>
         <td class="num">${money(g.importe)}</td>
-        <td><button class="link" data-id="${g.id}">borrar</button></td>
+        <td>${mesEstaCerrado(monthKey(g.fecha)) ? '<span class="note" title="Mes cerrado — protegido contra borrado">🔒</span>' : `<button class="link" data-id="${g.id}">borrar</button>`}</td>
       </tr>`).join('');
     wrap.innerHTML = `<table><thead><tr>
       <th>Banco</th><th>Empresa</th><th>Fecha</th><th>Concepto</th><th>Categoría</th><th class="num">Importe</th><th></th>
@@ -1768,7 +1790,9 @@
     wrap.querySelectorAll('button.link').forEach(btn=>{
       btn.addEventListener('click', async ()=>{
         const id = btn.dataset.id;
-        gastos = gastos.filter(g=>g.id!==id);
+        const g = gastos.find(x=>x.id===id);
+        if(g && mesEstaCerrado(monthKey(g.fecha))){ alert('Este mes está cerrado — no se puede borrar.'); return; }
+        gastos = gastos.filter(x=>x.id!==id);
         await deleteGasto(id);
         renderAll();
       });
@@ -1879,6 +1903,13 @@
 
   document.getElementById('filter-mes').addEventListener('change', (e)=>{ filters.month = e.target.value; renderAll(); });
   document.getElementById('filter-empresa').addEventListener('change', (e)=>{ filters.empresa = e.target.value; renderAll(); });
+  document.getElementById('btn-toggle-cerrado').addEventListener('click', ()=>{
+    if(!filters.month) return;
+    if(mesEstaCerrado(filters.month)) mesesCerrados.delete(filters.month);
+    else mesesCerrados.add(filters.month);
+    scheduleSyncSupabase();
+    renderAll();
+  });
   document.getElementById('search-box').addEventListener('input', (e)=>{ filters.search = e.target.value.toLowerCase(); renderOps(); });
   document.getElementById('btn-clear-filters').addEventListener('click', ()=>{
     filters = { bank:null, month:'', search:'', empresa:'', concepto:null };
@@ -1913,24 +1944,30 @@
   });
 
   document.getElementById('btn-reset-ops').addEventListener('click', async ()=>{
-    if(!confirm('Esto borra todas las operaciones cargadas. ¿Seguro?')) return;
-    for(const o of ops) await deleteOp(o.id);
-    ops = [];
-    uploadedFiles = new Set(); scheduleSyncSupabase();
+    const aBorrar = ops.filter(o=>!mesEstaCerrado(monthKey(o.fecha)));
+    const protegidas = ops.length - aBorrar.length;
+    if(!confirm(`Esto borra ${aBorrar.length} operación(es) de meses abiertos.${protegidas? ` (${protegidas} de meses cerrados quedan protegidas).` : ''} ¿Seguro?`)) return;
+    for(const o of aBorrar) await deleteOp(o.id);
+    ops = ops.filter(o=>mesEstaCerrado(monthKey(o.fecha)));
+    scheduleSyncSupabase();
     renderAll();
   });
   document.getElementById('btn-reset-cartera').addEventListener('click', async ()=>{
-    if(!confirm('Esto vacía la cartera de cheques. ¿Seguro?')) return;
-    for(const c of cartera) await deleteChk(c.id);
-    cartera = [];
-    uploadedFiles = new Set(); scheduleSyncSupabase();
+    const aBorrar = cartera.filter(c=>!mesEstaCerrado(monthKey(c.fechaPago)));
+    const protegidas = cartera.length - aBorrar.length;
+    if(!confirm(`Esto vacía ${aBorrar.length} cheque(s) de meses abiertos.${protegidas? ` (${protegidas} de meses cerrados quedan protegidos).` : ''} ¿Seguro?`)) return;
+    for(const c of aBorrar) await deleteChk(c.id);
+    cartera = cartera.filter(c=>mesEstaCerrado(monthKey(c.fechaPago)));
+    scheduleSyncSupabase();
     renderAll();
   });
   document.getElementById('btn-reset-gastos').addEventListener('click', async ()=>{
-    if(!confirm('Esto borra todos los extractos de gastos bancarios cargados. ¿Seguro?')) return;
-    for(const g of gastos) await deleteGasto(g.id);
-    gastos = [];
-    uploadedFiles = new Set(); scheduleSyncSupabase();
+    const aBorrar = gastos.filter(g=>!mesEstaCerrado(monthKey(g.fecha)));
+    const protegidas = gastos.length - aBorrar.length;
+    if(!confirm(`Esto borra ${aBorrar.length} movimiento(s) de meses abiertos.${protegidas? ` (${protegidas} de meses cerrados quedan protegidos).` : ''} ¿Seguro?`)) return;
+    for(const g of aBorrar) await deleteGasto(g.id);
+    gastos = gastos.filter(g=>mesEstaCerrado(monthKey(g.fecha)));
+    scheduleSyncSupabase();
     renderAll();
   });
 
