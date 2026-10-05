@@ -330,7 +330,7 @@
 
       <div class="section-label">OPERACIONES CARGADAS</div>
       <div id="table-ops"><div class="loading">Cargando…</div></div>
-      <div style="margin-top:14px;"><button class="ghost-btn" id="btn-reset-ops">Borrar todas las operaciones</button></div>
+      <div style="margin-top:14px;"><button class="ghost-btn" id="btn-reset-ops">Borrar todas las operaciones</button> <button class="ghost-btn" id="btn-sinfecha-ops" title="Quita solo las filas que quedaron sin fecha por una carga fallida">Quitar filas sin fecha</button></div>
     </div>
 
     <!-- ===================== TAB: CARTERA ===================== -->
@@ -357,7 +357,7 @@
 
       <div class="section-label">MOVIMIENTOS (solo los que cuentan como costo)</div>
       <div id="table-gastos"><div class="loading">Cargando…</div></div>
-      <div style="margin-top:14px;"><button class="ghost-btn" id="btn-reset-gastos">Borrar extractos cargados</button></div>
+      <div style="margin-top:14px;"><button class="ghost-btn" id="btn-reset-gastos">Borrar extractos cargados</button> <button class="ghost-btn" id="btn-sinfecha-gastos" title="Quita solo las filas que quedaron sin fecha por una carga fallida">Quitar filas sin fecha</button></div>
     </div>
 
     <!-- ===================== TAB: INDICADORES ===================== -->
@@ -464,6 +464,9 @@
           <li>Como es compartido, si dos personas suben el mismo archivo casi al mismo tiempo, puede que ambas cargas entren igual — el control de "archivo repetido" funciona pero no es instantáneo entre usuarios.</li>
           <li>Si subís el mismo archivo dos veces, se duplica en Operaciones y Gastos bancarios (Cartera sí filtra duplicados, por número de cheque + importe + fecha).</li>
           <li>Si un banco cambia el formato de su exportación, es probable que el archivo nuevo no entre a la primera. Avisá y se ajusta el detector contra el archivo real.</li>
+          <li><strong>Reversas:</strong> las líneas que devuelven un cargo (ej. "REV. IMP.DEBITO", "REVERSA INGRESOS BRUTO", "Dev.imp.deb") se <strong>restan</strong> del costo de su rubro, y aparecen en negativo en la tabla de Gastos bancarios. Los demás créditos (transferencias, acreditación de cheques, etc.) no cuentan como costo.</li>
+          <li><strong>Empresa por el nombre del archivo:</strong> si el nombre contiene "SPL" separado por espacio, guion o guion bajo (ej. <code>provincia_SPL.xls</code>, <code>Banco Provincia SPL.xls</code>) se carga como SPL Distribuidora; si no, como Spotsline. Conviene revisarlo en la tabla después de cargar.</li>
+          <li><strong>Carga fallida:</strong> si un archivo entró con filas "sin fecha", usá el botón "Quitar filas sin fecha" (en Operaciones y en Gastos bancarios) para sacar solo esas filas, y volvé a subir el archivo con otro nombre.</li>
           <li>La "tasa promedio" que se muestra es la tasa de costo efectivo (interés ÷ importe vendido), no la tasa nominal anual que declara cada banco por plazo.</li>
         </ul>
 
@@ -864,10 +867,7 @@
       const row = aoa[i];
       const desc = String(row[idx.desc]||'');
       if(!/COMISION E INTERESES DESCUENTO DOCUMENTO/i.test(desc)) continue;
-      const fechaRaw = String(row[idx.fecha]||'');
-      const m = fechaRaw.match(/(\d{1,2})-([a-zA-Z]{3})-(\d{4})/);
-      let fecha = '';
-      if(m){ const mm = monthMap[m[2].toLowerCase()]; if(mm) fecha = `${m[3]}-${mm}-${m[1].padStart(2,'0')}`; }
+      const fecha = toISOtextmonth(row[idx.fecha]);
       const amount = Math.abs(parseAR(row[idx.importe]));
       // el "VALORES NEGOCIADOS" que sigue (dentro del mismo bloque) es el importe nominal del cheque descontado
       let importeVendido = 0;
@@ -898,15 +898,28 @@
     return 'Otro';
   }
   function detectEmpresaFromFilename(fn){
-    return /\bspl\b/i.test(fn) ? 'SPL Distribuidora' : 'Spotsline';
+    return /(^|[^a-z0-9])spl([^a-z0-9]|$)/i.test(fn) ? 'SPL Distribuidora' : 'Spotsline';
   }
   function toISOtextmonth(s){
-    const m = String(s).match(/(\d{1,2})-([a-zA-Z]{3})-(\d{4})/);
+    // acepta "31-ago-2026", "29-sept-2026", "05-set.-2026" (mes de 3 o más letras, se toman las 3 primeras)
+    const m = String(s).match(/(\d{1,2})-([a-zA-Z]{3,10})\.?-(\d{4})/);
     if(!m) return '';
-    const monthMap = {ene:'01',feb:'02',mar:'03',abr:'04',may:'05',jun:'06',jul:'07',ago:'08',sep:'09',oct:'10',nov:'11',dic:'12'};
-    const mm = monthMap[m[2].toLowerCase()];
+    const monthMap = {ene:'01',feb:'02',mar:'03',abr:'04',may:'05',jun:'06',jul:'07',ago:'08',sep:'09',set:'09',oct:'10',nov:'11',dic:'12'};
+    const mm = monthMap[m[2].slice(0,3).toLowerCase()];
     if(!mm) return '';
     return `${m[3]}-${mm}-${m[1].padStart(2,'0')}`;
+  }
+  // ¿El concepto es una reversa/devolución de un cargo anterior? (solo esas líneas, cuando vienen como crédito, restan del costo)
+  function esReversaConcepto(txt){
+    return /^(REV\.|REV |REVERSA|REVERSO|DEV\.|DEV |DEVOL|AJUSTE|REINTEGRO|ANULACION|ANUL\.)/i.test(String(txt||'').trim());
+  }
+  // Para formatos con importe firmado (débito negativo / crédito positivo): devuelve importe, costo y categoría finales
+  function resolverImporteFirmado(signed, concept, desc, info){
+    const abs = Math.abs(signed);
+    if(!info.cost || info.exclude) return { importe:abs, cost:!!info.cost, cat:info.cat };
+    if(signed<0) return { importe:abs, cost:true, cat:info.cat };
+    if(esReversaConcepto(concept) || esReversaConcepto(desc)) return { importe:-abs, cost:true, cat:info.cat };
+    return { importe:abs, cost:false, cat:'Movimiento neutro (crédito)' };
   }
   function categorizeMovement(concept, desc, family){
     const text = (String(concept||'')+' '+String(desc||'')).toUpperCase();
@@ -917,7 +930,7 @@
       return {cat:'Descuento de cheques (ya contado en Operaciones)', cost:false, exclude:true};
     }
     if(/INTERES/.test(text)) return {cat:'Interés por descubierto', cost:true};
-    if(/COMISION|^COM\.|COMEXCACUE|DATANET|GESTION DE DOCUMENTOS DIFERIDOS|G\.DE CHEQUE/.test(text)) return {cat:'Comisiones', cost:true};
+    if(/COMISION|^COM\.|COMEXCACUE|DATANET|GESTION DE DOCUMENTOS DIFERIDOS/.test(text)) return {cat:'Comisiones', cost:true};
     if(/SELLO/.test(text)) return {cat:'Sellos', cost:true};
     if(/\bIVA\b/.test(text)) return {cat:'IVA', cost:true};
     if(/INGRESOS BRUTO|IIBB|SIRCREB|PERCEPCION I\. BRUTOS|IB BS AS|ING\.BR|GRAVAMEN IB/.test(text)) return {cat:'IIBB / Percepciones', cost:true};
@@ -938,11 +951,12 @@
       const concept = String(row[0]||'').trim();
       if(!concept) continue;
       const fecha = toISO(String(row[1]||''));
-      const importe = Math.abs(parseAR(row[4]));
-      if(importe===0) continue;
+      const signed = parseAR(row[4]);
+      if(signed===0) continue;
       const desc = String(row[5]||'');
-      const {cat, cost, exclude} = categorizeMovement(concept, desc, 'principal');
-      out.push({ id:uid(), banco, empresa, fecha, concepto: concept+(desc.trim()?(' — '+desc.trim()):''), importe, categoria:cat, cost:!!cost, exclude:!!exclude });
+      const info = categorizeMovement(concept, desc, 'principal');
+      const r = resolverImporteFirmado(signed, concept, desc, info);
+      out.push({ id:uid(), banco, empresa, fecha, concepto: concept+(desc.trim()?(' — '+desc.trim()):''), importe:r.importe, categoria:r.cat, cost:r.cost, exclude:!!info.exclude });
     }
     return out;
   }
@@ -961,11 +975,14 @@
       const concept = String(row[2]||'').trim();
       const debito = parseAR(row[4]);
       const credito = parseAR(row[5]);
-      const importe = debito>0? debito : credito;
-      if(!concept || importe===0) continue;
+      const importeBase = debito>0? debito : credito;
+      if(!concept || importeBase===0) continue;
       const {cat, cost, exclude} = categorizeMovement(concept, '', 'credicoop');
+      // un crédito solo resta del costo si el concepto es realmente una reversa/devolución
+      const esReversa = debito<=0 && credito>0 && cost && !exclude && esReversaConcepto(concept);
+      const importe = esReversa ? -credito : importeBase;
       out.push({ id:uid(), banco:'Credicoop', empresa, fecha, concepto:concept, importe,
-        categoria: debito>0? cat : 'Movimiento neutro (crédito)', cost: debito>0 && cost, exclude:!!exclude });
+        categoria: (debito>0 || esReversa)? cat : 'Movimiento neutro (crédito)', cost: (debito>0 || esReversa) && cost, exclude:!!exclude });
     }
     return out;
   }
@@ -984,10 +1001,12 @@
       const desc = String(row[idx.desc]||'').trim();
       if(!desc) continue;
       const fecha = toISOtextmonth(row[idx.fecha]);
-      const importe = Math.abs(parseAR(row[idx.importe]));
-      if(importe===0) continue;
-      const {cat, cost, exclude} = categorizeMovement(desc, '', 'provincia');
-      out.push({ id:uid(), banco:'Provincia', empresa, fecha, concepto:desc, importe, categoria:cat, cost:!!cost, exclude:!!exclude });
+      const signed = parseAR(row[idx.importe]);
+      if(signed===0) continue;
+      const info = categorizeMovement(desc, '', 'provincia');
+      // en este formato los débitos vienen negativos; un crédito solo resta si es una reversa ("REV.", "REVERSA"...)
+      const r = resolverImporteFirmado(signed, desc, '', info);
+      out.push({ id:uid(), banco:'Provincia', empresa, fecha, concepto:desc, importe:r.importe, categoria:r.cat, cost:r.cost, exclude:!!info.exclude });
     }
     return out;
   }
@@ -1003,10 +1022,11 @@
       const fecha = toISO(String(row[0]||''));
       if(!fecha) continue;
       const concept = String(row[2]||'').trim();
-      const importe = Math.abs(parseAR(row[3]));
-      if(!concept || importe===0) continue;
-      const {cat, cost, exclude} = categorizeMovement(concept, '', 'nacion');
-      out.push({ id:uid(), banco:'Nación', empresa, fecha, concepto:concept, importe, categoria:cat, cost:!!cost, exclude:!!exclude });
+      const signed = parseAR(row[3]);
+      if(!concept || signed===0) continue;
+      const info = categorizeMovement(concept, '', 'nacion');
+      const r = resolverImporteFirmado(signed, concept, '', info);
+      out.push({ id:uid(), banco:'Nación', empresa, fecha, concepto:concept, importe:r.importe, categoria:r.cat, cost:r.cost, exclude:!!info.exclude });
     }
     return out;
   }
@@ -1015,7 +1035,7 @@
     const out = [];
     if(!aoa || aoa.length<2) return out;
     const header = aoa[0].map(h=>String(h).trim());
-    const iFecha = header.indexOf('Fecha'), iDesc = header.indexOf('Descripción'), iDeb = header.indexOf('Débitos');
+    const iFecha = header.indexOf('Fecha'), iDesc = header.indexOf('Descripción'), iDeb = header.indexOf('Débitos'), iCred = header.indexOf('Créditos');
     if(iFecha===-1 || iDesc===-1 || iDeb===-1) return out;
     const empresa = detectEmpresaFromFilename(filename);
     const groupedIdx = new Set();
@@ -1031,9 +1051,20 @@
       const row = aoa[i];
       const concept = String(row[iDesc]||'').trim();
       if(!concept) continue;
-      const importe = Math.abs(parseAR(row[iDeb]));
-      if(importe===0) continue;
+      const importeDeb = Math.abs(parseAR(row[iDeb]));
+      const importeCred = iCred>-1 ? Math.abs(parseAR(row[iCred])) : 0;
+      if(importeDeb===0 && importeCred===0) continue;
       const fecha = excelDateToISO(row[iFecha]);
+      // un crédito dentro de un rubro de costo (ej. "Dev.imp.deb.ley 25413") es una reversa: resta
+      if(importeDeb===0){
+        if(concept === 'Credito Descuento Documento' || groupedIdx.has(i)) continue;
+        const rv = categorizeMovement(concept, '', 'galicia_mov');
+        if(rv.cost && !rv.exclude && esReversaConcepto(concept)){
+          out.push({ id:uid(), banco:'Galicia', empresa, fecha, concepto:concept, importe:-importeCred, categoria:rv.cat, cost:true, exclude:false });
+        }
+        continue;
+      }
+      const importe = importeDeb;
       if(groupedIdx.has(i)){
         out.push({ id:uid(), banco:'Galicia', empresa, fecha, concepto:concept, importe, categoria:'Descuento de cheques (ya contado en Operaciones)', cost:false, exclude:true });
         continue;
@@ -1175,7 +1206,17 @@
       const concept = String(rows[i][h.iConcepto]||'').trim();
       if(!concept || /^SALDO|^TOTALES/i.test(concept)) continue;
       const debito = parseAR(rows[i][h.iDeb]);
-      if(debito<=0) continue;
+      if(debito<=0){
+        // un crédito dentro de un rubro de costo (reversa/devolución) resta
+        const credito = (h.iCred>-1) ? parseAR(rows[i][h.iCred]) : 0;
+        if(credito>0 && !excludedIdx.has(i)){
+          const rv = categorizeMovement(concept, '', bank.toLowerCase());
+          if(rv.cost && !rv.exclude && esReversaConcepto(concept)){
+            out.push({ id:uid(), banco:bank, empresa, fecha:toISOanyDate(rows[i][h.iFecha]), concepto:concept, importe:-credito, categoria:rv.cat, cost:true, exclude:false });
+          }
+        }
+        continue;
+      }
       const fecha = toISOanyDate(rows[i][h.iFecha]);
       if(excludedIdx.has(i)){
         out.push({ id:uid(), banco:bank, empresa, fecha, concepto:concept, importe:debito, categoria:'Descuento de cheques (ya contado en Operaciones)', cost:false, exclude:true });
@@ -1276,7 +1317,8 @@
       if(sheetName === 'diferidos_debito_credito'){
         const found = parseCredicoopSheet(aoaStr);
         if(found.length===0) return [{ok:false, msg:`"${file.name}": no encontré filas de interés.`}];
-        for(const o of found) await addOp(o);
+        const empFile = detectEmpresaFromFilename(file.name);
+        for(const o of found){ o.empresa = empFile; await addOp(o); }
         await markFileUploaded(fp);
         return [{ok:true, msg:`${file.name}: se agregaron ${found.length} operación(es) de Credicoop → Operaciones.`}];
       }
@@ -1288,6 +1330,7 @@
         let ventaLabel = venta.length? 'Galicia' : '';
         if(venta.length === 0){ venta = parseMovimientosVenta(aoaStr, file.name); ventaLabel = venta[0]? venta[0].banco : ''; }
         if(venta.length){
+          if(ventaLabel==='Galicia'){ const empFile = detectEmpresaFromFilename(file.name); venta.forEach(o=>{ o.empresa = empFile; }); }
           for(const o of venta) await addOp(o);
           out.push({ok:true, msg:`${file.name}: se agregaron ${venta.length} operación(es) de ${ventaLabel} → Operaciones.`});
         }
@@ -1309,6 +1352,8 @@
         const out = [];
         const venta = parseProvinciaMovimientosXls(aoaStr);
         if(venta.length){
+          const empFile = detectEmpresaFromFilename(file.name);
+          venta.forEach(o=>{ o.empresa = empFile; });
           for(const o of venta) await addOp(o);
           out.push({ok:true, msg:`${file.name}: se agregaron ${venta.length} operación(es) de Provincia → Operaciones.`});
         }
@@ -1949,6 +1994,24 @@
     if(!confirm(`Esto borra ${aBorrar.length} operación(es) de meses abiertos.${protegidas? ` (${protegidas} de meses cerrados quedan protegidas).` : ''} ¿Seguro?`)) return;
     for(const o of aBorrar) await deleteOp(o.id);
     ops = ops.filter(o=>mesEstaCerrado(monthKey(o.fecha)));
+    scheduleSyncSupabase();
+    renderAll();
+  });
+  document.getElementById('btn-sinfecha-ops').addEventListener('click', async ()=>{
+    const aBorrar = ops.filter(o=>!o.fecha);
+    if(aBorrar.length===0){ alert('No hay operaciones sin fecha.'); return; }
+    if(!confirm(`Se van a quitar ${aBorrar.length} operación(es) que quedaron sin fecha por una carga fallida. El resto no se toca. ¿Seguro?`)) return;
+    for(const o of aBorrar) await deleteOp(o.id);
+    ops = ops.filter(o=>!!o.fecha);
+    scheduleSyncSupabase();
+    renderAll();
+  });
+  document.getElementById('btn-sinfecha-gastos').addEventListener('click', async ()=>{
+    const aBorrar = gastos.filter(g=>!g.fecha);
+    if(aBorrar.length===0){ alert('No hay movimientos sin fecha.'); return; }
+    if(!confirm(`Se van a quitar ${aBorrar.length} movimiento(s) que quedaron sin fecha por una carga fallida. El resto no se toca. ¿Seguro?`)) return;
+    for(const g of aBorrar) await deleteGasto(g.id);
+    gastos = gastos.filter(g=>!!g.fecha);
     scheduleSyncSupabase();
     renderAll();
   });
