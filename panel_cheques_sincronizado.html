@@ -331,6 +331,7 @@
       <div class="section-label">OPERACIONES CARGADAS</div>
       <div id="table-ops"><div class="loading">Cargando…</div></div>
       <div style="margin-top:14px;"><button class="ghost-btn" id="btn-reset-ops">Borrar todas las operaciones</button> <button class="ghost-btn" id="btn-sinfecha-ops" title="Quita solo las filas que quedaron sin fecha por una carga fallida">Quitar filas sin fecha</button></div>
+      <div style="margin-top:10px;display:flex;gap:8px;align-items:center;flex-wrap:wrap;"><span class="note">Borrar solo lo de un banco (respeta el mes y la empresa del filtro; no toca meses cerrados 🔒):</span> <select id="sel-banco-ops"></select> <button class="ghost-btn" id="btn-borrar-banco-ops">Borrar operaciones del banco</button></div>
     </div>
 
     <!-- ===================== TAB: CARTERA ===================== -->
@@ -358,6 +359,7 @@
       <div class="section-label">MOVIMIENTOS (solo los que cuentan como costo)</div>
       <div id="table-gastos"><div class="loading">Cargando…</div></div>
       <div style="margin-top:14px;"><button class="ghost-btn" id="btn-reset-gastos">Borrar extractos cargados</button> <button class="ghost-btn" id="btn-sinfecha-gastos" title="Quita solo las filas que quedaron sin fecha por una carga fallida">Quitar filas sin fecha</button></div>
+      <div style="margin-top:10px;display:flex;gap:8px;align-items:center;flex-wrap:wrap;"><span class="note">Borrar solo el extracto de un banco (respeta el mes y la empresa del filtro; no toca meses cerrados 🔒):</span> <select id="sel-banco-gastos"></select> <button class="ghost-btn" id="btn-borrar-banco-gastos">Borrar extractos del banco</button></div>
     </div>
 
     <!-- ===================== TAB: INDICADORES ===================== -->
@@ -466,6 +468,8 @@
           <li>Si un banco cambia el formato de su exportación, es probable que el archivo nuevo no entre a la primera. Avisá y se ajusta el detector contra el archivo real.</li>
           <li><strong>Reversas:</strong> las líneas que devuelven un cargo (ej. "REV. IMP.DEBITO", "REVERSA INGRESOS BRUTO", "Dev.imp.deb") se <strong>restan</strong> del costo de su rubro, y aparecen en negativo en la tabla de Gastos bancarios. Los demás créditos (transferencias, acreditación de cheques, etc.) no cuentan como costo.</li>
           <li><strong>Empresa por el nombre del archivo:</strong> si el nombre contiene "SPL" separado por espacio, guion o guion bajo (ej. <code>provincia_SPL.xls</code>, <code>Banco Provincia SPL.xls</code>) se carga como SPL Distribuidora; si no, como Spotsline. Conviene revisarlo en la tabla después de cargar.</li>
+          <li><strong>Período del extracto:</strong> en los extractos que traen "Fecha desde / Fecha hasta" (Comafi, ICBC, Macro, Patagonia, Galicia resumido), los cargos que el banco asienta al día siguiente del cierre (ej. intereses y sellos del 01/09 dentro del extracto de agosto) se cuentan en el <strong>mes del extracto</strong>; la fecha original queda anotada en el concepto como "[mov. del 01/09/2026]". Si dos extractos se superponen y traen el mismo movimiento (mismo N° de comprobante), el segundo no lo vuelve a cargar y te avisa cuántos omitió.</li>
+          <li><strong>Borrar lo de un banco:</strong> en Operaciones y en Gastos bancarios, elegí el banco en el selector de abajo y tocá "Borrar … del banco". Solo borra ese banco, respeta el mes y la empresa que tengas filtrados y no toca los meses cerrados 🔒. Después podés volver a subir su extracto, incluso con el mismo nombre.</li>
           <li><strong>Carga fallida:</strong> si un archivo entró con filas "sin fecha", usá el botón "Quitar filas sin fecha" (en Operaciones y en Gastos bancarios) para sacar solo esas filas, y volvé a subir el archivo con otro nombre.</li>
           <li>La "tasa promedio" que se muestra es la tasa de costo efectivo (interés ÷ importe vendido), no la tasa nominal anual que declara cada banco por plazo.</li>
         </ul>
@@ -655,8 +659,9 @@
     scheduleSyncSupabase();
   }
   function fileFingerprint(file){ return `${file.name}|${file.size||0}|${file.lastModified||0}`; }
-  async function addOp(o){ if(!o.id) o.id = uid(); await storeOp(o); ops.push(o); }
-  async function addGasto(g){ if(!g.id) g.id = uid(); await storeGasto(g); gastos.push(g); }
+  let currentFp = null; // archivo que se está procesando (para anotar el origen de cada fila)
+  async function addOp(o){ if(!o.id) o.id = uid(); if(currentFp && !o.origen) o.origen = currentFp; await storeOp(o); ops.push(o); }
+  async function addGasto(g){ if(!g.id) g.id = uid(); if(currentFp && !g.origen) g.origen = currentFp; await storeGasto(g); gastos.push(g); }
   function tag(banco){
     const c = bankColor[banco]||'#8b93a1';
     return `<span class="bank-tag" style="background:${c}22;color:${c}">${banco}</span>`;
@@ -922,19 +927,33 @@
     return { importe:abs, cost:false, cat:'Movimiento neutro (crédito)' };
   }
   function categorizeMovement(concept, desc, family){
-    const text = (String(concept||'')+' '+String(desc||'')).toUpperCase();
+    // texto en mayúsculas y sin tildes (los extractos a veces traen acentos rotos: "d.bito", "Percepci.n")
+    const text = (String(concept||'')+' '+String(desc||'')).toUpperCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'');
     if(family==='principal' && /^DESC\.DOC$/.test(String(concept||'').trim().toUpperCase())){
       return {cat:'Descuento de cheques (ya contado en Operaciones)', cost:false, exclude:true};
     }
     if(family==='provincia' && /COMISION E INTERESES DESCUENTO DOCUMENTO|VALORES NEGOCIADOS/.test(text)){
       return {cat:'Descuento de cheques (ya contado en Operaciones)', cost:false, exclude:true};
     }
-    if(/INTERES/.test(text)) return {cat:'Interés por descubierto', cost:true};
-    if(/COMISION|^COM\.|COMEXCACUE|DATANET|GESTION DE DOCUMENTOS DIFERIDOS/.test(text)) return {cat:'Comisiones', cost:true};
-    if(/SELLO/.test(text)) return {cat:'Sellos', cost:true};
-    if(/\bIVA\b/.test(text)) return {cat:'IVA', cost:true};
-    if(/INGRESOS BRUTO|IIBB|SIRCREB|PERCEPCION I\. BRUTOS|IB BS AS|ING\.BR|GRAVAMEN IB/.test(text)) return {cat:'IIBB / Percepciones', cost:true};
-    if(/25413|IMPUESTO AL DEBITO|IMPUESTO AL CREDITO|IMPUESTO DEBITO|IMPUESTO CREDITO|GRAVAMEN LEY 25413|IMP\.DB\/CR BANCARIOS|DB\/CR BANCARIOS/.test(text)) return {cat:'Impuesto Ley 25413', cost:true};
+    if(family==='principal'){
+      // Agregador de Galicia: los costos de cada venta de cheques (interés, IVA, sellos, IIBB) vienen con estas marcas y ya están en Operaciones
+      const c0 = String(concept||'').trim().toUpperCase(), d0 = String(desc||'').trim().toUpperCase();
+      if((c0==='DEBITOS' && /INT\. NOMINAL/.test(d0)) || (c0==='OTROS IMP' && /IMP\. DE SELLOS/.test(d0)) ||
+         (c0==='IMPUESTOS' && d0==='IVA') || (c0==='IIBBPERCEP' && d0==='PERC.I.BRUTOS')){
+        return {cat:'Descuento de cheques (ya contado en Operaciones)', cost:false, exclude:true};
+      }
+    }
+    // Galicia (agregador): cargo mensual de servicio de cuenta = concepto DEBITOS con el mes como descripción
+    if(/^DEBITOS (ENERO|FEBRERO|MARZO|ABRIL|MAYO|JUNIO|JULIO|AGOSTO|SEPTIEMBRE|SETIEMBRE|OCTUBRE|NOVIEMBRE|DICIEMBRE) \d{4}\s*$/.test(text)) return {cat:'Comisiones', cost:true};
+    // Intereses por saldo deudor / descubierto (y por incumplimiento de valores descontados)
+    if(/INTERES|LIQUIDACION INTER|INT\.? ?S\/DESC|INTS\. S\/DESC|INT\.? INCUMP/.test(text)) return {cat:'Interés por descubierto', cost:true};
+    // Comisiones y cargos de mantenimiento de cuenta
+    if(/COMISION|^COM\.|^COMIS\.|COMEXCACUE|DATANET|C\.MANT\.CTA|MANTENIM|MANTEN PAQ|RESUMEN DE CUENTA|SERVICIO ACREDITACIONES|CO\.V\.COBRO/.test(text)) return {cat:'Comisiones', cost:true};
+    if(/SELLO|SELLADO|OTROS IMP/.test(text)) return {cat:'Sellos', cost:true};
+    if(/\bIVA\b|I\.V\.A|IMPUESTO AL VALOR|PERCEPCION IVA/.test(text)) return {cat:'IVA', cost:true};
+    if(/INGRESOS BRUTO|ING\.? ?BRUTOS|INGR\.? BRUTOS|\bI\. ?BRUTOS|\bI\.B\.?\b|IIBB|SIRCREB|PERCIBB|PERCEPCION IN\b|PERCEPCI.N ING|RECAUDACION I\.B|IB BS AS|PERCEP INGR|RET\.IN\.BRU|GRAVAMEN IB/.test(text)) return {cat:'IIBB / Percepciones', cost:true};
+    // Impuesto a los débitos y créditos bancarios (Ley 25.413)
+    if(/25\.?413|IMPUESTO AL D.BITO|IMPUESTO AL CR.DITO|IMPUESTO D.BITO|IMPUESTO CR.DITO|IMP\.DB\/CR|DB\/CR BANCARIOS|IMP\.DTO\.BC|D.BITO TASA|CR.DITO TASA|IMP S\/DEB|IMP S\/CRED|GRAVAMEN LEY/.test(text)) return {cat:'Impuesto Ley 25413', cost:true};
     if(/EMBARGO|EMB\.JUD|LEV\.EMB/.test(text)) return {cat:'Embargo judicial', cost:false};
     return {cat:'Movimiento neutro', cost:false};
   }
@@ -946,17 +965,24 @@
     if(hidx===-1) return out;
     const banco = detectBankFromFilename(filename);
     const empresa = detectEmpresaFromFilename(filename);
+    // período que cubre el extracto ("Fecha hasta"): los cargos que el banco registra el día siguiente (ej. intereses y sellos del 01/09
+    // dentro del extracto de agosto) pertenecen al período del extracto
+    let hastaISO = '';
+    for(let i=0;i<hidx;i++){ if(/^Fecha hasta/i.test(String(aoa[i][0]).trim())) hastaISO = toISO(String(aoa[i][1]||'')); }
     for(let i=hidx+1;i<aoa.length;i++){
       const row = aoa[i];
       const concept = String(row[0]||'').trim();
       if(!concept) continue;
-      const fecha = toISO(String(row[1]||''));
+      const fechaBanco = toISO(String(row[1]||''));
+      const fecha = (hastaISO && fechaBanco && fechaBanco > hastaISO) ? hastaISO : fechaBanco;
+      const comprobante = String(row[2]||'').trim();
       const signed = parseAR(row[4]);
       if(signed===0) continue;
       const desc = String(row[5]||'');
       const info = categorizeMovement(concept, desc, 'principal');
       const r = resolverImporteFirmado(signed, concept, desc, info);
-      out.push({ id:uid(), banco, empresa, fecha, concepto: concept+(desc.trim()?(' — '+desc.trim()):''), importe:r.importe, categoria:r.cat, cost:r.cost, exclude:!!info.exclude });
+      const reubicada = (fecha !== fechaBanco) ? ` [mov. del ${fechaBanco.split('-').reverse().join('/')}]` : '';
+      out.push({ id:uid(), banco, empresa, fecha, fechaBanco, comprobante, concepto: concept+(desc.trim()?(' — '+desc.trim()):'')+reubicada, importe:r.importe, categoria:r.cat, cost:r.cost, exclude:!!info.exclude });
     }
     return out;
   }
@@ -1259,6 +1285,11 @@
 
   // ==================== CARGA ÚNICA: detecta y deriva cada archivo a donde corresponda ====================
   async function processAnyFile(file){
+    currentFp = fileFingerprint(file);
+    try{ return await processAnyFileInner(file); }
+    finally{ currentFp = null; }
+  }
+  async function processAnyFileInner(file){
     const fp = fileFingerprint(file);
     if(uploadedFiles.has(fp)){
       return [{ ok:false, msg:`"${file.name}": ya habías subido este mismo archivo antes — no lo cargué de nuevo para no duplicar. Si es una versión corregida, cambiale el nombre y volvé a subirlo.` }];
@@ -1374,9 +1405,16 @@
       else if(sheetName === 'saldos_y_movimientos') gasto = parseCredicoopMovimientos(aoaStr, file.name);
       else gasto = parseNacionMovimientos(aoaStr, file.name);
       if(gasto.length){
-        for(const g of gasto) await addGasto(g);
+        // si dos extractos se superponen (mismo banco, empresa, fecha, concepto, importe y N° de comprobante) no se vuelve a cargar lo ya existente
+        const claveG = (g)=>[g.banco,g.empresa,g.fechaBanco||g.fecha,g.concepto.replace(/ \[mov\. del [^\]]*\]$/,''),g.importe,g.comprobante].join('|');
+        const existentes = new Set(gastos.filter(x=>x.comprobante).map(claveG));
+        let omitidos = 0;
+        for(const g of gasto){
+          if(g.comprobante && existentes.has(claveG(g))){ omitidos++; continue; }
+          await addGasto(g);
+        }
         await markFileUploaded(fp);
-        return [{ok:true, msg:`${file.name}: se agregaron ${gasto.length} movimiento(s) de ${gasto[0].banco} → Gastos bancarios.`}];
+        return [{ok:true, msg:`${file.name}: se agregaron ${gasto.length-omitidos} movimiento(s) de ${gasto[0].banco} → Gastos bancarios${omitidos?` (${omitidos} ya estaban cargados desde otro extracto y se omitieron)`:''}.`}];
       }
       return [{ok:false, msg:`"${file.name}": no reconocí el formato.`}];
     }catch(e){
@@ -1913,12 +1951,63 @@
     }).join('');
   }
 
+  // ---------- borrar lo de un banco ----------
+  function poblarSelectsBancos(){
+    const llenar = (id, lista) => {
+      const sel = document.getElementById(id); if(!sel) return;
+      const prev = sel.value;
+      const bancos = [...new Set([...ALL_BANKS, ...lista.map(r=>r.banco)])];
+      sel.innerHTML = '<option value="">— elegí un banco —</option>' + bancos.map(b=>{
+        const n = lista.filter(r=>r.banco===b).length;
+        return `<option value="${b}">${b} (${n})</option>`;
+      }).join('');
+      sel.value = prev || '';
+    };
+    llenar('sel-banco-ops', ops);
+    llenar('sel-banco-gastos', gastos);
+  }
+  // suelta el "ya subí este archivo" de los archivos cuyos datos se borraron por completo, para poder volver a subirlos
+  function liberarArchivos(banco, origenes){
+    const quedan = new Set([...ops, ...gastos, ...cartera].map(r=>r.origen).filter(Boolean));
+    let liberados = 0;
+    for(const fp of [...origenes]){ if(!quedan.has(fp) && uploadedFiles.delete(fp)) liberados++; }
+    // filas viejas (cargadas antes de que se anotara el origen): si no queda nada de ese banco, se sueltan los archivos con el banco en el nombre
+    const quedaBanco = ops.some(o=>o.banco===banco) || gastos.some(g=>g.banco===banco);
+    if(!quedaBanco){
+      for(const fp of [...uploadedFiles]){ if(detectBankFromFilename(fp.split('|')[0])===banco && uploadedFiles.delete(fp)) liberados++; }
+    }
+    return liberados;
+  }
+  async function borrarPorBanco(tipo){
+    const sel = document.getElementById(tipo==='ops' ? 'sel-banco-ops' : 'sel-banco-gastos');
+    const banco = sel.value;
+    if(!banco){ alert('Elegí primero un banco.'); return; }
+    const lista = tipo==='ops' ? ops : gastos;
+    const coincide = r => r.banco===banco && (!filters.month || monthKey(r.fecha)===filters.month) && (!filters.empresa || (r.empresa||'Spotsline')===filters.empresa);
+    const candidatos = lista.filter(coincide);
+    const aBorrar = candidatos.filter(r=>!mesEstaCerrado(monthKey(r.fecha)));
+    const protegidas = candidatos.length - aBorrar.length;
+    const alcance = `${filters.month ? ' de '+monthLabel(filters.month) : ' de todos los meses abiertos'}${filters.empresa ? ' ('+filters.empresa+')' : ''}`;
+    if(candidatos.length===0){ alert(`No hay ${tipo==='ops'?'operaciones':'movimientos'} de ${banco}${alcance}.`); return; }
+    if(aBorrar.length===0){ alert(`Todo lo de ${banco}${alcance} está en meses cerrados 🔒: no se borra. Abrí el mes si realmente querés borrarlo.`); return; }
+    if(!confirm(`Se van a borrar ${aBorrar.length} ${tipo==='ops'?'operación(es)':'movimiento(s)'} de ${banco}${alcance}.${protegidas ? ` (${protegidas} de meses cerrados quedan protegidos).` : ''} Lo de otros bancos no se toca. ¿Seguro?`)) return;
+    const ids = new Set(aBorrar.map(r=>r.id));
+    const origenes = new Set(aBorrar.map(r=>r.origen).filter(Boolean));
+    for(const r of aBorrar){ if(tipo==='ops') await deleteOp(r.id); else await deleteGasto(r.id); }
+    if(tipo==='ops') ops = ops.filter(r=>!ids.has(r.id)); else gastos = gastos.filter(r=>!ids.has(r.id));
+    const liberados = liberarArchivos(banco, origenes);
+    scheduleSyncSupabase();
+    renderAll();
+    alert(`Listo: se borraron ${aBorrar.length} de ${banco}. ` + (liberados ? 'Ya podés volver a subir ese extracto (incluso con el mismo nombre).' : 'Si vas a volver a subir el mismo archivo y el panel lo rechaza, cambiale el nombre.'));
+  }
+
   function renderAll(){
     renderTop();
     renderOps();
     renderCartera();
     renderGastos();
     renderIndicadores();
+    poblarSelectsBancos();
     scheduleSyncSupabase();
   }
 
@@ -1997,6 +2086,8 @@
     scheduleSyncSupabase();
     renderAll();
   });
+  document.getElementById('btn-borrar-banco-ops').addEventListener('click', ()=> borrarPorBanco('ops'));
+  document.getElementById('btn-borrar-banco-gastos').addEventListener('click', ()=> borrarPorBanco('gastos'));
   document.getElementById('btn-sinfecha-ops').addEventListener('click', async ()=>{
     const aBorrar = ops.filter(o=>!o.fecha);
     if(aBorrar.length===0){ alert('No hay operaciones sin fecha.'); return; }
